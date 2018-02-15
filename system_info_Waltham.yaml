@@ -1,0 +1,54 @@
+# /group/ngs/src/az.reporting
+
+genomes:
+  hg38:
+    all_transcripts:       /ngs/reference_data/genomes/Hsapiens/hg38/rnaseq/ref-transcripts.gtf
+    tx2gene_name: /home/oem/Downloads/tx2gene_name.csv
+
+    dbsnp:                 /ngs/reference_data/genomes/Hsapiens/hg38/variation/dbsnp-150.vcf.gz
+    dbsnp_multi_mafs:      /ngs/reference_data/genomes/Hsapiens/hg38/dbSNP_multi_mafs_v150.txt
+    clinvar:               /ngs/reference_data/genomes/Hsapiens/hg38/variation/clinvar.vcf.gz
+    cosmic:                /ngs/reference_data/genomes/Hsapiens/hg38/variation.staging/CosmicCodingMuts_v82.vcf.gz
+
+  hg38-noalt:
+    all_transcripts:       /ngs/reference_data/genomes/Hsapiens/hg38/rnaseq/ref-transcripts.gtf
+    tx2gene_name: /home/oem/Downloads/tx2gene_name.csv
+
+    dbsnp:                 /ngs/reference_data/genomes/Hsapiens/hg38/variation/dbsnp-150.vcf.gz
+    dbsnp_multi_mafs:      /ngs/reference_data/genomes/Hsapiens/hg38/dbSNP_multi_mafs_v150.txt
+    clinvar:               /ngs/reference_data/genomes/Hsapiens/hg38/variation/clinvar.vcf.gz
+    cosmic:                /ngs/reference_data/genomes/Hsapiens/hg38/variation.staging/CosmicCodingMuts_v82.vcf.gz
+
+  hg19:
+    all_transcripts:       /ngs/reference_data/genomes/Hsapiens/hg19/rnaseq/ref-transcripts.gtf
+    tx2gene_name: /home/oem/Downloads/tx2gene_name.csv
+
+    dbsnp:                 /ngs/reference_data/genomes/Hsapiens/hg19/variation/dbsnp-147.vcf.gz
+    dbsnp_multi_mafs:      /ngs/reference_data/genomes/Hsapiens/hg19/variation/dbSNP_multi_mafs_v147.txt
+    clinvar:               /ngs/reference_data/genomes/Hsapiens/hg19/variation/clinvar.vcf.gz
+    cosmic:                /ngs/reference_data/genomes/Hsapiens/hg19/variation/CosmicCodingMuts_v82.vcf.gz
+
+  hg19-noalt:
+    all_transcripts:       /ngs/reference_data/genomes/Hsapiens/hg19/rnaseq/ref-transcripts.gtf
+    tx2gene_name: /home/oem/Downloads/tx2gene_name.csv
+
+    dbsnp:                 /ngs/reference_data/genomes/Hsapiens/hg19/variation/dbsnp-147.vcf.gz
+    dbsnp_multi_mafs:      /ngs/reference_data/genomes/Hsapiens/hg19/variation/dbSNP_multi_mafs_v147.txt
+    clinvar:               /ngs/reference_data/genomes/Hsapiens/hg19/variation/clinvar.vcf.gz
+    cosmic:                /ngs/reference_data/genomes/Hsapiens/hg19/variation/CosmicCodingMuts_v82.vcf.gz
+
+  mm10:
+    seq:                   /ngs/reference_data/genomes/Mmusculus/mm10/seq/mm10.fa
+    bwa:                   /ngs/reference_data/genomes/Mmusculus/mm10/bwa/mm10.fa
+
+    dbsnp:                 /ngs/reference_data/genomes/Mmusculus/mm10/variation/mm10-dbSNP-2013-09-12.vcf.gz
+
+queue: batch.q
+scheduler: sge
+threads: 30
+resources: [pename=smp]
+priority: 0  # TODO: set priority throught resources??
+
+smtp_host: 'relay.astrazeneca.net'
+
+bcbio_paths: /group/ngs/src/bcbio-nextgen/latest-devel/rhel6-x64/bin:/group/ngs/src/bcbio-nextgen/latest-devel/rhel6-x64/anaconda/bin:/users/klpf990/bin/preseq
