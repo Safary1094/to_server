@@ -3,7 +3,7 @@ import pandas as pd
 from ngs_reporting.rnaseq import gene_expression
 from ngs_utils.file_utils import which, can_reuse, safe_mkdir
 from ngs_reporting.rnaseq.table_css import table_css_string
-from os.path import join, dirname
+from os.path import join, dirname, isfile
 from ngs_utils.logger import debug, info
 import numpy as np
 
@@ -92,10 +92,14 @@ def transcript_level_html(tpm, TxLvl_html_path):
 
 def transcript_summary(proj, key_gene_names):
 
+    local_quant_path = ['sailfish/quant', 'salmon']
+
     for sam in proj.samples:
 
-        quant_path = join(sam.dirpath, 'salmon', 'quant.sf')
-        sam_qua = pd.read_table(quant_path)
+        for p in local_quant_path:
+            quant_path = join(sam.dirpath, p, 'quant.sf')
+            if isfile(quant_path):
+                sam_qua = pd.read_table(quant_path)
 
         sam_qua = sam_qua.set_index('Name')
 
