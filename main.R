@@ -1,8 +1,12 @@
 library(Rsubread)
 
-ann = '/home/alexey/Downloads/ref-transcripts.cancer.trx.gtf'
-bam = '/home/alexey/ngs/NGS_Reporting_TestData/data/bcbio_postproc/bams/syn3-normal-ready.bam'
-outp = '/home/alexey/exon.csv'
+ann = '/ngs/reference_data/genomes/Hsapiens/hg38/rnaseq/ref-transcripts.gtf'
+#ann = '/home/alexey/Downloads/ref-transcripts.cancer.trx.gtf'
+
+bam = '/ngs/oncology/Analysis/external/EXT_087_Novogene_CDK9i_RNASeq/rnaseq/final/TR4h_Repeat1'
+#bam = '/home/alexey/ngs/NGS_Reporting_TestData/data/bcbio_postproc/bams/syn3-normal-ready.bam'
+
+outp = '/ngs/usr/safary/exon.csv'
 
 #GTF.attrType = "exon_id",
 res_exons <- featureCounts(files = bam, annot.ext = ann, isGTFAnnotationFile = T,  useMetaFeatures = F)
@@ -18,4 +22,4 @@ a = data.frame(n,c,s,e)
 
 colnames(a)[2] <- "counts"
 
-write.csv(a, '/home/alexey/exon_counts.csv')
+write.csv(a, outp)
