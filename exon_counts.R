@@ -20,7 +20,7 @@ print(bam)
 print('ann:')
 print(ann)
 
-res_exons <- featureCounts(files = bam, annot.ext = ann, isGTFAnnotationFile = T,  useMetaFeatures = F)
+res_exons <- featureCounts(files = bam, annot.ext = ann, isGTFAnnotationFile = T,  useMetaFeatures = F, allowMultiOverlap = T, nthreads = 4, countMultiMappingReads = F, GTF.featureType = 'exonic_part', fraction = 0.9, isPairedEnd = T)
 
 data = cbind(res_exons$counts, res_exons$annotation$Start, res_exons$annotation$End)
 
