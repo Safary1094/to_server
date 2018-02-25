@@ -9,6 +9,8 @@ from os.path import join, dirname, isfile, abspath
 from ngs_utils.logger import debug, info, critical, err
 from ngs_utils.call_process import run
 import numpy as np
+from shutil import copyfile
+
 
 def annotateGeneCounts(proj, key_genes):
     genes = pd.read_csv(proj.raw_expression_dir + '/combined.counts', sep = '\t')
@@ -138,6 +140,8 @@ def transcript_summary(proj, key_gene_names):
     tx_lvl_html_path = proj.expression_dir + '/html/isoform.html'
     transcript_level_html(tpm_key, tx_lvl_html_path)
 
+    tpm_key.to_csv(join(proj.final_dir, 'isoforms.tpm'), sep='\t')
+
 
 def exon_level_html(cnt, exLvl_html_path):
 
@@ -154,7 +158,7 @@ def exon_level_html(cnt, exLvl_html_path):
     html_table_code = ex_cnt.to_html(float_format=fl_for, border=0, justify='left', index_names=False, index=False)
     table_id = 'TxLevel'
     html_table_code = html_table_code.replace('<table border="0" class="dataframe">','<table id="' + table_id + '" class="display">')
-    title = '<h3>Isoform level</h3><p>Shown only key genes</p>'
+    title = '<h3>Exon level</h3><p>Shown only key genes</p>'
     # jquery scripts
     style = table_css_string
     script1 = '<script type="text/javascript" charset="utf8" src="http://ajax.aspnetcdn.com/ajax/jQuery/jquery-1.8.2.min.js"></script>'
@@ -240,8 +244,15 @@ def run_QC(proj, out_file):
         print(cmd)
         # os.system(cmd)
 
-    return [join(out_file, f) for f in os.listdir(out_file)[1:]]
+    # prepare file-links
 
+    fnames = ['rawCounts.csv', 'normalizedCounts.csv', 'rlog.csv', 'vst.csv', \
+              'gene.est.csv', 'gene.final.csv', 'gene.fitted.csv', 'corMatrix.csv']
+    fnames = [join(out_file, f) for f in fnames]
+
+    fnames.append(join(proj.date_dir, 'combined.counts'))
+
+    return fnames
 
 
 def run_FA(fa_in, fa_out):
@@ -260,38 +271,43 @@ def run_analysis(proj, key_gene_names):
     info('*' * 70)
     info('running RNA analysis')
 
-    gene_expression.make_heatmaps(proj, key_gene_names)
+    # gene_expression.make_heatmaps(proj, key_gene_names)
 
-    transcript_summary(proj, key_gene_names)
+    # transcript_summary(proj, key_gene_names)
 
     # create_exon_counts_file(proj, key_gene_names)
 
-    # if not os.path.isfile(proj.expression_dir + '/combined.counts'):
-    #     annotateGeneCounts(proj, key_gene_names)
+    if not os.path.isfile(proj.expression_dir + '/combined.counts'):
+        annotateGeneCounts(proj, key_gene_names)
 
-    # rna_files_list = []
-    #
-    # safe_mkdir(proj.dir + '/work/postproc')
-    # de_out = proj.work_dir + '/RNA_DE.csv'
-    # hm_out = proj.work_dir + '/RNA_HM.csv'
-    # run_DE(proj, de_out, hm_out)
-    # rna_files_list.extend([de_out, hm_out])
-    #
-    # full_table_html_path = proj.expression_dir + '/html/diff_exp.html'
-    # make_full_expreesion_table(de_out, full_table_html_path)
-    # proj.full_expression_dir = full_table_html_path
-    #
-    # qc_out_dir = safe_mkdir(proj.work_dir + '/RNA_QC')
-    # qc_out_files = run_QC(proj, qc_out_dir)
-    #
-    # rna_files_list.extend(qc_out_files)
-    #
-    # fa_in = de_out
-    # fa_out = proj.work_dir + '/'
-    # fa_file = run_FA(fa_in, fa_out)
-    # rna_files_list.extend([fa_file])
+    rna_files_list = []
+
+    if not isfile(join(proj.date_dir, 'project-summary.yaml')):
+        copyfile(join(proj.log_dir, 'project-summary.yaml'), join(proj.date_dir, 'project-summary.yaml'))
+    if not isfile(join(proj.date_dir, 'combined.counts')):
+        copyfile(join(proj.expression_dir, 'combined.counts'), join(proj.date_dir, 'combined.counts'))
+
+    safe_mkdir(proj.dir + '/work/postproc')
+    de_out = proj.work_dir + '/RNA_DE.csv'
+    hm_out = proj.work_dir + '/RNA_HM.csv'
+    run_DE(proj, de_out, hm_out)
+    rna_files_list.extend([de_out, hm_out])
+
+    full_table_html_path = proj.expression_dir + '/html/diff_exp.html'
+    make_full_expreesion_table(de_out, full_table_html_path)
+    proj.full_expression_dir = full_table_html_path
+
+    qc_out_dir = safe_mkdir(proj.work_dir + '/RNA_QC')
+    qc_out_files = run_QC(proj, qc_out_dir)
+
+    rna_files_list.extend(qc_out_files)
+
+    fa_in = de_out
+    fa_out = proj.work_dir + '/'
+    fa_file = run_FA(fa_in, fa_out)
+    rna_files_list.extend([fa_file])
 
 
 
-    # for p in rna_files_list:
-    #     proj.postproc_mqc_files.append(p)
+    for p in rna_files_list:
+        proj.postproc_mqc_files.append(p)
