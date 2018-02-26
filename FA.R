@@ -20,7 +20,7 @@ raw_dataset = read.csv(file=input_path, header=TRUE)
 key_data = raw_dataset[raw_dataset$is_key == 'True',]
 
 genes_obj = key_data[, 3]
-names(genes_obj) = as.character(key_data[,5])
+names(genes_obj) = as.character(key_data[,6])
 genes_obj = sort(genes_obj, decreasing = TRUE)
 
 converted_names = bitr(as.character(key_data[,5]), fromType = "ENSEMBL", toType="ENTREZID", OrgDb="org.Hs.eg.db")
@@ -38,7 +38,7 @@ gseaKEGG <- gseKEGG(
   organism = tolower("hsa"),
   nPerm = 1000,
   minGSSize = 40,
-  pvalueCutoff = 0.35,
+  pvalueCutoff = 0.40,
   verbose = FALSE)
 
 gseaKEGGSummary <- slot(gseaKEGG, "result")
