@@ -9,11 +9,12 @@ from collections import OrderedDict
 import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
-# import scipy.stats as st
+import scipy.stats as st
 from multiqc.plots import heatmap
 from multiqc.plots import scatter
 from math import log2, log10
 import logging
+from os.path import join
 
 
 # Initialise the logger
@@ -32,14 +33,34 @@ class MultiqcModule(BaseMultiqcModule):
         file_names, roots = [], []
         for f in self.find_log_files(mod_name, filecontents=False):
             print(f)
-            file_names.append(f['fn'])       # Filename
-            roots.append(f['root'])          # Directory file was in
-
-        raw_counts      = pd.read_csv(roots[0] + '/' + file_names[0], sep=',')
-        norm_counts     = pd.read_csv(roots[1] + '/' + file_names[1], sep=',')
-        rlog            = pd.read_csv(roots[3] + '/' + file_names[3], sep=',')
-        vst             = pd.read_csv(roots[4] + '/' + file_names[4], sep=',')
-        combined_counts = pd.read_csv(roots[5] + '/' + file_names[5], sep='\t')
+            dirpath, fname = f['root'], f['fn']
+            if f['s_name'] == 'rawCounts':
+                raw_counts = pd.read_csv(join(dirpath, fname))
+                print(raw_counts.head())
+            if f['s_name'] == 'normalizedCounts':
+                norm_counts = pd.read_csv(join(dirpath, fname))
+                print(norm_counts.head())
+            if f['s_name'] == 'rlog':
+                rlog = pd.read_csv(join(dirpath, fname))
+                print(rlog.head())
+            if f['s_name'] == 'vst':
+                vst = pd.read_csv(join(dirpath, fname))
+                print(vst.head())
+            if f['s_name'] == 'combined':
+                combined_counts = pd.read_csv(join(dirpath, fname), sep='\t')
+                print(combined_counts.head())
+            if f['s_name'] == 'gene.est':
+                genes_est = pd.read_csv(join(dirpath, fname))
+                print(genes_est.head())
+            if f['s_name'] == 'gene.final':
+                genes_final = pd.read_csv(join(dirpath, fname))
+                print(genes_final.head())
+            if f['s_name'] == 'gene.fitted':
+                genes_fitted = pd.read_csv(join(dirpath, fname))
+                print(genes_fitted.head())
+            if f['s_name'] == 'corMatrix':
+                raw_data = pd.read_csv(join(dirpath, fname))
+                print(raw_data.head())
 
         col_names = list(raw_counts)[1:]
         group_num = len(col_names)
@@ -48,12 +69,12 @@ class MultiqcModule(BaseMultiqcModule):
 
         self.plot_correlation_heatmap(raw_counts, norm_counts, col_names, group_num)
         self.plot_mean_sd(raw_counts, norm_counts, col_names, group_num, vst, rlog, combined_counts)
-        self.plot_disp_ests(roots, file_names)
-        #self.plot_covariates(roots, file_names)
+        self.plot_disp_ests(combined_counts, genes_est,genes_final,genes_fitted)
+        self.plot_covariates(raw_data)
 
 
-    def plot_covariates(self, roots, file_names):
-        raw_data = pd.read_csv(roots[9] + '/' + file_names[9], sep=',')
+    def plot_covariates(self, raw_data):
+
         comp_names = []
         for iter, row in raw_data.iterrows():
             comp_names.append(row['compare'])
@@ -97,11 +118,7 @@ class MultiqcModule(BaseMultiqcModule):
 
 
 
-    def plot_disp_ests(self, roots, file_names):
-        combined_counts = pd.read_csv(roots[5] + '/' + file_names[5], sep='\t')
-        genes_est       = pd.read_csv(roots[6] + '/' + file_names[6], sep=',')
-        genes_final     = pd.read_csv(roots[7] + '/' + file_names[7], sep=',')
-        genes_fitted    = pd.read_csv(roots[8] + '/' + file_names[8], sep=',')
+    def plot_disp_ests(self, combined_counts, genes_est,genes_final,genes_fitted):
 
         pconfig = {
             'title': 'bcbioRNASeq Quality Control: Dispersion Estimates plot',
@@ -212,6 +229,9 @@ class MultiqcModule(BaseMultiqcModule):
         rlog['mean'] = rlog[col_names].mean(axis=1)
         rlog['mean_rank'] = rlog['mean'].rank()
 
+        print(col_names)
+        print(vst.head())
+
         vst['mean'] = vst[col_names].mean(axis=1)
         vst['mean_rank'] = vst['mean'].rank()
 
@@ -268,7 +288,11 @@ def get_config(plot_id):
            # )
 
 def set_gene_names(data_frame, combined_counts):
+    print(data_frame.head())
+    print(combined_counts.head())
+
     data_frame = data_frame.loc[data_frame['gene.names'].isin(combined_counts['id'])]
+
     d = combined_counts.set_index('id')['HUGO'].to_dict()
     data_frame['HUGO'] = data_frame['gene.names'].map(d)
     data = dict()
