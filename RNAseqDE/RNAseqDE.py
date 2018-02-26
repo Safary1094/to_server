@@ -24,9 +24,9 @@ class MultiqcModule(BaseMultiqcModule):
     def __init__(self):
 
         mod_name = 'RNAseqDE'
+
         # Initialise the parent object
         super(MultiqcModule, self).__init__(name='RNA Differential Expression', anchor=mod_name)
-
         for f in self.find_log_files(mod_name, filecontents=False):
             print(f)
             dirpath, fname = f['root'], f['fn']
