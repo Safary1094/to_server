@@ -32,7 +32,7 @@ from ngs_reporting.coverage import extract_features_for_genes
 from ngs_reporting.oncoprints import create_oncoprints_link
 from ngs_reporting.panel_evaluation import evaluate_panel, threshs_by_cov_interval
 from ngs_reporting.reference_data import get_key_genes_bed, get_key_genes_file
-from ngs_reporting.rnaseq import RNAanalysis, gene_expression
+from ngs_reporting.rnaseq import gene_expression, RNAanalysis
 from ngs_reporting.seq2c.seq2c import seq2c_summarize_bcbio_proj
 from ngs_reporting.visualisation import make_circos_and_linear_plots
 
@@ -52,7 +52,7 @@ def run_postproc(proj, parallel_cfg, filt_cnf, jira_url=None, re_summarize=False
 
     error_msg = []
     try:
-        #clean_up_bcbio_dir(proj)
+        clean_up_bcbio_dir(proj)
 
         if proj.sv_regions_bed:
             proj.sv_regions_bed = _prep_seq2c_bed(proj)
@@ -70,12 +70,14 @@ def run_postproc(proj, parallel_cfg, filt_cnf, jira_url=None, re_summarize=False
 
         from ngs_utils.parallel import parallel_view
 
-        # Run RNA-analisys
-        if proj.is_rnaseq:
-            RNAanalysis.run(proj, key_gene_names)
-
-
         genome_cfg = az.get_refdata(proj.genome_build)
+
+        if proj.is_rnaseq:
+            info('*' * 70)
+            info('Analysing expression')
+            # gene_expression.make_heatmaps(proj, key_gene_names)
+            RNAanalysis.run_analysis(proj, key_gene_names)
+
         with parallel_view(len(proj.samples), parallel_cfg, safe_mkdir(proj.work_dir)) as view:
             if preseq:
                 info()
@@ -327,7 +329,6 @@ def _move_work_to_scratch(work_dir):
 
 
 def clean_up_bcbio_dir(bcbio_proj):
-
     set_up_log(safe_mkdir(bcbio_proj.postproc_log_dir), 'postproc.log')
 
     def _move(src_fpath, dst_fpath):
@@ -412,7 +413,7 @@ def filtering_fn(proj, s, filt_cnf, dbsnp_multi_mafs, caller, cores_per_job=None
     output_dir = safe_mkdir(join(s.dirpath, BcbioProject.varfilter_dir))
     run_filtering(
         work_dir, output_dir, s.find_annotated_vcf(caller=caller), s.name,
-        filt_cnf, proj.project_name, s.genome_build, dbsnp_multi_mafs, caller)
+        filt_cnf, proj.project_name, s.genome_build, dbsnp_multi_mafs, caller, is_wgs=proj.is_wgs)
 
 
 def _visualization(view, proj, filt_cnf, key_gene_names, skip_ngb=False):
