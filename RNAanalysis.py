@@ -91,7 +91,7 @@ def transcript_level_html(tpm, TxLvl_html_path):
     script3 = '<script> $(function(){$("#' + table_id + '").dataTable({"iDisplayLength": 50}); })</script>'
     # write combined html code
     file_out = open(TxLvl_html_path, 'w')
-    file_out.write(title + html_table_code + script1 + script2 + script3)
+    file_out.write(title + style + html_table_code + script1 + script2 + script3)
     file_out.close()
 
 
@@ -118,7 +118,7 @@ def transcript_summary(proj, key_gene_names):
 
     tpm.columns = sam_names
 
-    tx2gene = pd.read_csv(proj.date_dir + '/name_by_transcript_id.csv')
+    tx2gene = pd.read_csv(join(proj.local_ref_data, proj.genome_build, 'name_by_transcript_id.csv'))
     tx2gene = tx2gene.set_index('ensTx')
     tx2gene = tx2gene.to_dict()
     tx2gene = tx2gene['Gene']
@@ -136,6 +136,8 @@ def transcript_summary(proj, key_gene_names):
             tpm.at[i, 'is_key'] = 'True'
 
     tpm_key = tpm.loc[tpm['is_key'] == 'True']
+
+    print(tpm.head())
 
     tx_lvl_html_path = proj.expression_dir + '/html/isoform.html'
     transcript_level_html(tpm_key, tx_lvl_html_path)
@@ -199,7 +201,7 @@ def create_exon_counts_file(proj, key_gene_names):
         cnt = cnt.rename(columns={'counts': sam.name})
 
     # add gene name
-    id2name = pd.read_csv(proj.date_dir + '/name_by_gene_id.csv')
+    id2name = pd.read_csv(join(proj.local_ref_data, proj.genome_build, 'name_by_gene_id.csv'))
     id2name = id2name.set_index('ensId')
     id2name = id2name.to_dict()
     id2name = id2name['Name']
@@ -231,7 +233,7 @@ def run_DE(proj, de_out, hm_out):
         cmd = ' '.join([pathRScript, pathDE_R, proj.final_dir, de_out, hm_out])
         print('Running:')
         print(cmd)
-        # os.system(cmd)
+        os.system(cmd)
 
 
 def run_QC(proj, out_file):
@@ -242,7 +244,7 @@ def run_QC(proj, out_file):
         cmd = ' '.join([pathRScript, pathQC_R, proj.final_dir, out_file])
         print('Running:')
         print(cmd)
-        # os.system(cmd)
+        os.system(cmd)
 
     # prepare file-links
 
@@ -262,7 +264,7 @@ def run_FA(fa_in, fa_out):
         cmd = ' '.join([pathRScript, pathFA_R, fa_in, fa_out])
         print('Running:')
         print(cmd)
-        # os.system(cmd)
+        os.system(cmd)
 
     return join(fa_out, 'RNA_PW.csv')
 
@@ -271,43 +273,44 @@ def run_analysis(proj, key_gene_names):
     info('*' * 70)
     info('running RNA analysis')
 
-    # gene_expression.make_heatmaps(proj, key_gene_names)
 
-    # transcript_summary(proj, key_gene_names)
+    gene_expression.make_heatmaps(proj, key_gene_names)
+
+    transcript_summary(proj, key_gene_names)
 
     # create_exon_counts_file(proj, key_gene_names)
 
-    if not os.path.isfile(proj.expression_dir + '/combined.counts'):
-        annotateGeneCounts(proj, key_gene_names)
+    # if not os.path.isfile(proj.expression_dir + '/combined.counts'):
+    #     annotateGeneCounts(proj, key_gene_names)
 
-    rna_files_list = []
-
-    if not isfile(join(proj.date_dir, 'project-summary.yaml')):
-        copyfile(join(proj.log_dir, 'project-summary.yaml'), join(proj.date_dir, 'project-summary.yaml'))
-    if not isfile(join(proj.date_dir, 'combined.counts')):
-        copyfile(join(proj.expression_dir, 'combined.counts'), join(proj.date_dir, 'combined.counts'))
-
-    safe_mkdir(proj.dir + '/work/postproc')
-    de_out = proj.work_dir + '/RNA_DE.csv'
-    hm_out = proj.work_dir + '/RNA_HM.csv'
-    run_DE(proj, de_out, hm_out)
-    rna_files_list.extend([de_out, hm_out])
-
-    full_table_html_path = proj.expression_dir + '/html/diff_exp.html'
-    make_full_expreesion_table(de_out, full_table_html_path)
-    proj.full_expression_dir = full_table_html_path
-
-    qc_out_dir = safe_mkdir(proj.work_dir + '/RNA_QC')
-    qc_out_files = run_QC(proj, qc_out_dir)
-
-    rna_files_list.extend(qc_out_files)
-
-    fa_in = de_out
-    fa_out = proj.work_dir + '/'
-    fa_file = run_FA(fa_in, fa_out)
-    rna_files_list.extend([fa_file])
-
-
-
-    for p in rna_files_list:
-        proj.postproc_mqc_files.append(p)
+    # rna_files_list = []
+    #
+    # if not isfile(join(proj.date_dir, 'project-summary.yaml')):
+    #     copyfile(join(proj.log_dir, 'project-summary.yaml'), join(proj.date_dir, 'project-summary.yaml'))
+    # if not isfile(join(proj.date_dir, 'combined.counts')):
+    #     copyfile(join(proj.expression_dir, 'combined.counts'), join(proj.date_dir, 'combined.counts'))
+    #
+    # safe_mkdir(proj.dir + '/work/postproc')
+    # de_out = proj.work_dir + '/RNA_DE.csv'
+    # hm_out = proj.work_dir + '/RNA_HM.csv'
+    # run_DE(proj, de_out, hm_out)
+    # rna_files_list.extend([de_out, hm_out])
+    #
+    # full_table_html_path = proj.expression_dir + '/html/diff_exp.html'
+    # make_full_expreesion_table(de_out, full_table_html_path)
+    # proj.full_expression_dir = full_table_html_path
+    #
+    # qc_out_dir = safe_mkdir(proj.work_dir + '/RNA_QC')
+    # qc_out_files = run_QC(proj, qc_out_dir)
+    #
+    # rna_files_list.extend(qc_out_files)
+    #
+    # fa_in = de_out
+    # fa_out = proj.work_dir + '/'
+    # fa_file = run_FA(fa_in, fa_out)
+    # rna_files_list.extend([fa_file])
+    #
+    #
+    #
+    # for p in rna_files_list:
+    #     proj.postproc_mqc_files.append(p)
