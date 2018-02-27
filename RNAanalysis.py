@@ -11,6 +11,18 @@ from ngs_utils.call_process import run
 import numpy as np
 from shutil import copyfile
 
+def load_id2name(proj):
+    id2name = pd.read_csv(join(proj.local_ref_data, proj.genome_build, 'name_by_gene_id.csv'))
+    id2name = id2name.set_index('ensId')
+    id2name = id2name.to_dict()
+    return id2name['Name']
+
+def load_tx2name(proj):
+    tx2gene = pd.read_csv(join(proj.local_ref_data, proj.genome_build, 'name_by_transcript_id.csv'))
+    tx2gene = tx2gene.set_index('ensTx')
+    tx2gene = tx2gene.to_dict()
+    return tx2gene['Gene']
+
 
 def annotateGeneCounts(proj, key_genes):
     genes = pd.read_csv(proj.raw_expression_dir + '/combined.counts', sep = '\t')
@@ -118,26 +130,22 @@ def transcript_summary(proj, key_gene_names):
 
     tpm.columns = sam_names
 
-    tx2gene = pd.read_csv(join(proj.local_ref_data, proj.genome_build, 'name_by_transcript_id.csv'))
-    tx2gene = tx2gene.set_index('ensTx')
-    tx2gene = tx2gene.to_dict()
-    tx2gene = tx2gene['Gene']
-
+    # add gene names
+    tx2gene = load_tx2name(proj)
     tpm['gene'] = 'NA'
-
     for i in tpm.index.tolist():
         if i in tx2gene:
             tpm.at[i, 'gene'] = tx2gene[i]
+        else:
+            print('Warning! transcript index ' + i + ' not found')
 
+    # mark key genes
     tpm['is_key'] = 'False'
-
     for i in tpm.index.tolist():
         if tpm.at[i,'gene'] in key_gene_names:
             tpm.at[i, 'is_key'] = 'True'
 
     tpm_key = tpm.loc[tpm['is_key'] == 'True']
-
-    print(tpm.head())
 
     tx_lvl_html_path = proj.expression_dir + '/html/isoform.html'
     transcript_level_html(tpm_key, tx_lvl_html_path)
@@ -174,23 +182,19 @@ def exon_level_html(cnt, exLvl_html_path):
 
 def create_exon_counts_file(proj, key_gene_names):
 
-    transcripts_file = az.get_refdata(proj.genome_build)['all_transcripts']
+    transcripts_file = az.get_refdata(proj.genome_build)['exon_annotation']
 
     for sam in proj.samples:
-        bam_name = sam.name + '-ready.bam'
-        bam_path = join(sam.dirpath, bam_name)
-
-        safe_mkdir(proj.dir + '/work/postproc')
+        bam_path = join(sam.dirpath, sam.name + '-ready.bam')
         out_file = join(proj.work_dir, sam.name + '_exon_counts.csv')
 
-        if not can_reuse(out_file, bam_name):
+        if not can_reuse(out_file, bam_path):
             pathEXC_R = dirname(__file__) + '/exon_counts.R'
             cmdl = ' '.join(['Rscript', pathEXC_R, bam_path, out_file, transcripts_file])
             print(cmdl)
             os.system(cmdl)
 
         ex_cnt = pd.read_csv(out_file, skiprows=0, header=0)
-        # ex_cnt = ex_cnt.set_index('GeneID')
 
         if 'cnt' not in locals():
             cnt = ex_cnt
@@ -201,19 +205,14 @@ def create_exon_counts_file(proj, key_gene_names):
         cnt = cnt.rename(columns={'counts': sam.name})
 
     # add gene name
-    id2name = pd.read_csv(join(proj.local_ref_data, proj.genome_build, 'name_by_gene_id.csv'))
-    id2name = id2name.set_index('ensId')
-    id2name = id2name.to_dict()
-    id2name = id2name['Name']
-
+    id2name = load_id2name(proj)
     cnt['gene'] = 'NA'
-
     for i in cnt.index.tolist():
-        cnt.at[i, 'gene'] = id2name[cnt.at[i, 'GeneID']]
+        if cnt.at[i, 'GeneID'] in id2name:
+            cnt.at[i, 'gene'] = id2name[cnt.at[i, 'GeneID']]
 
-    # add is_key
+    # mark key genes
     cnt['is_key'] = 'False'
-
     for i in cnt.index.tolist():
         if cnt.at[i, 'gene'] in key_gene_names:
             cnt.at[i, 'is_key'] = 'True'
@@ -276,9 +275,11 @@ def run_analysis(proj, key_gene_names):
 
     gene_expression.make_heatmaps(proj, key_gene_names)
 
+    create_exon_counts_file(proj, key_gene_names)
+
     transcript_summary(proj, key_gene_names)
 
-    # create_exon_counts_file(proj, key_gene_names)
+
 
     # if not os.path.isfile(proj.expression_dir + '/combined.counts'):
     #     annotateGeneCounts(proj, key_gene_names)
