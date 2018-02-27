@@ -79,7 +79,7 @@ def make_full_expreesion_table(de_path, full_table_html_path):
     return full_table_html_path
 
 
-def transcript_level_html(tpm, TxLvl_html_path):
+def transcript_level_html(tpm, TxLvl_html_path, full_link):
 
     def fl_for(x):
         return "%.3f" % x
@@ -95,7 +95,9 @@ def transcript_level_html(tpm, TxLvl_html_path):
     html_table_code = tpm.to_html(float_format=fl_for, border=0, justify='left', index_names=False, index=False)
     table_id = 'TxLevel'
     html_table_code = html_table_code.replace('<table border="0" class="dataframe">','<table id="' + table_id + '" class="display">')
-    title = '<h3>Isoform level</h3><p>Shown only key genes</p>'
+    title = '<h3>Exon level</h3>Showing only key genes. \
+    The full results can be downloaded from here: \
+    <a href="'+ full_link + '">isoform_counts_full.tsv</a>'
     # jquery scripts
     style = table_css_string
     script1 = '<script type="text/javascript" charset="utf8" src="http://ajax.aspnetcdn.com/ajax/jQuery/jquery-1.8.2.min.js"></script>'
@@ -139,6 +141,9 @@ def transcript_summary(proj, key_gene_names):
         else:
             print('Warning! transcript index ' + i + ' not found')
 
+    full_link = join(proj.expression_dir, 'isoform_counts_full.tsv')
+    tpm.to_csv(full_link, sep='\t')
+
     # mark key genes
     tpm['is_key'] = 'False'
     for i in tpm.index.tolist():
@@ -148,12 +153,12 @@ def transcript_summary(proj, key_gene_names):
     tpm_key = tpm.loc[tpm['is_key'] == 'True']
 
     tx_lvl_html_path = proj.expression_dir + '/html/isoform.html'
-    transcript_level_html(tpm_key, tx_lvl_html_path)
+    transcript_level_html(tpm_key, tx_lvl_html_path, full_link)
 
     tpm_key.to_csv(join(proj.final_dir, 'isoforms.tpm'), sep='\t')
 
 
-def exon_level_html(cnt, exLvl_html_path):
+def exon_level_html(cnt, exLvl_html_path, full_link):
 
     def fl_for(x):
         return "%.3f" % x
@@ -168,7 +173,10 @@ def exon_level_html(cnt, exLvl_html_path):
     html_table_code = ex_cnt.to_html(float_format=fl_for, border=0, justify='left', index_names=False, index=False)
     table_id = 'TxLevel'
     html_table_code = html_table_code.replace('<table border="0" class="dataframe">','<table id="' + table_id + '" class="display">')
-    title = '<h3>Exon level</h3><p>Shown only key genes</p>'
+    title = '<h3>Exon level</h3>Showing only key genes. \
+    The full results can be downloaded from here: \
+    <a href="'+ full_link + '">exon_counts_full.tsv</a>'
+
     # jquery scripts
     style = table_css_string
     script1 = '<script type="text/javascript" charset="utf8" src="http://ajax.aspnetcdn.com/ajax/jQuery/jquery-1.8.2.min.js"></script>'
@@ -211,6 +219,9 @@ def create_exon_counts_file(proj, key_gene_names):
         if cnt.at[i, 'GeneID'] in id2name:
             cnt.at[i, 'gene'] = id2name[cnt.at[i, 'GeneID']]
 
+    full_link = join(proj.expression_dir, 'exon_counts_full.tsv')
+    cnt.to_csv(full_link, sep='\t')
+
     # mark key genes
     cnt['is_key'] = 'False'
     for i in cnt.index.tolist():
@@ -221,7 +232,7 @@ def create_exon_counts_file(proj, key_gene_names):
 
     # make html-table
     ex_lvl_html_path = proj.expression_dir + '/html/exon.html'
-    exon_level_html(cnt_key, ex_lvl_html_path)
+    exon_level_html(cnt_key, ex_lvl_html_path, full_link)
 
 
 def run_DE(proj, de_out, hm_out):
