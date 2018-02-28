@@ -286,43 +286,43 @@ def run_analysis(proj, key_gene_names):
 
     gene_expression.make_heatmaps(proj, key_gene_names)
 
-    create_exon_counts_file(proj, key_gene_names)
+    # create_exon_counts_file(proj, key_gene_names)
 
-    transcript_summary(proj, key_gene_names)
+    # transcript_summary(proj, key_gene_names)
 
 
 
-    # if not os.path.isfile(proj.expression_dir + '/combined.counts'):
-    #     annotateGeneCounts(proj, key_gene_names)
+    if not os.path.isfile(proj.expression_dir + '/combined.counts'):
+        annotateGeneCounts(proj, key_gene_names)
 
-    # rna_files_list = []
-    #
-    # if not isfile(join(proj.date_dir, 'project-summary.yaml')):
-    #     copyfile(join(proj.log_dir, 'project-summary.yaml'), join(proj.date_dir, 'project-summary.yaml'))
-    # if not isfile(join(proj.date_dir, 'combined.counts')):
-    #     copyfile(join(proj.expression_dir, 'combined.counts'), join(proj.date_dir, 'combined.counts'))
-    #
-    # safe_mkdir(proj.dir + '/work/postproc')
-    # de_out = proj.work_dir + '/RNA_DE.csv'
-    # hm_out = proj.work_dir + '/RNA_HM.csv'
-    # run_DE(proj, de_out, hm_out)
-    # rna_files_list.extend([de_out, hm_out])
-    #
-    # full_table_html_path = proj.expression_dir + '/html/diff_exp.html'
-    # make_full_expreesion_table(de_out, full_table_html_path)
-    # proj.full_expression_dir = full_table_html_path
-    #
-    # qc_out_dir = safe_mkdir(proj.work_dir + '/RNA_QC')
-    # qc_out_files = run_QC(proj, qc_out_dir)
-    #
-    # rna_files_list.extend(qc_out_files)
-    #
-    # fa_in = de_out
-    # fa_out = proj.work_dir + '/'
-    # fa_file = run_FA(fa_in, fa_out)
-    # rna_files_list.extend([fa_file])
-    #
-    #
-    #
-    # for p in rna_files_list:
-    #     proj.postproc_mqc_files.append(p)
+    rna_files_list = []
+
+    if not isfile(join(proj.date_dir, 'project-summary.yaml')):
+        copyfile(join(proj.log_dir, 'project-summary.yaml'), join(proj.date_dir, 'project-summary.yaml'))
+    if not isfile(join(proj.date_dir, 'combined.counts')):
+        copyfile(join(proj.expression_dir, 'combined.counts'), join(proj.date_dir, 'combined.counts'))
+
+    safe_mkdir(proj.dir + '/work/postproc')
+    de_out = proj.work_dir + '/RNA_DE.csv'
+    hm_out = proj.work_dir + '/RNA_HM.csv'
+    run_DE(proj, de_out, hm_out)
+    rna_files_list.extend([de_out, hm_out])
+
+    full_table_html_path = proj.expression_dir + '/html/diff_exp.html'
+    make_full_expreesion_table(de_out, full_table_html_path)
+    proj.full_expression_dir = full_table_html_path
+
+    qc_out_dir = safe_mkdir(proj.work_dir + '/RNA_QC')
+    qc_out_files = run_QC(proj, qc_out_dir)
+
+    rna_files_list.extend(qc_out_files)
+
+    fa_in = de_out
+    fa_out = proj.work_dir + '/'
+    fa_file = run_FA(fa_in, fa_out)
+    rna_files_list.extend([fa_file])
+
+
+
+    for p in rna_files_list:
+        proj.postproc_mqc_files.append(p)
