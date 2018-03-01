@@ -8,8 +8,16 @@ print('bcbioRNASeq loaded')
 
 args = commandArgs(trailingOnly=TRUE)
 
-real_project_path = args[1]
-#real_project_path = '/home/alexey/ngs/NGS_Reporting_TestData/data/bcbio_postproc/Dev_0406/final/'
+if (length(args) == 3) {
+  real_project_path = args[1]
+  DEout_path = args[2]
+  HMout_path = args[3]
+} else {
+  print('Warning! No input parameters. Using defaults')
+  real_project_path = '/home/alexey/ngs/NGS_Reporting_TestData/data/bcbio_postproc/Dev_0406/final/'
+  DEout_path = '/home/alexey/ngs/NGS_Reporting_TestData/data/bcbio_postproc/Dev_0406/work/postproc/RNA_DE.csv'
+  HMout_path = '/home/alexey/ngs/NGS_Reporting_TestData/data/bcbio_postproc/Dev_0406/work/postproc/RNA_HM.csv'
+}
 
 print('Reading project')
 print(real_project_path)
@@ -45,8 +53,8 @@ is_key = raw_dataset$is_key
 # make dataframe
 data = data.frame(p, lfc, baseMean, gene_names, HUGO, is_key)
 
-DEout_path = args[2]
-#DEout_path = '/home/alexey/ngs/NGS_Reporting_TestData/data/bcbio_postproc/Dev_0406/work/postproc/RNA_DE.csv'
+
+
 
 print('Writing DE result')
 print(DEout_path)
@@ -120,8 +128,6 @@ aux_sorted <- results[match(rev(labels(hh$rowDendrogram)), rownames(counts_sc)),
 
 data_heatmap = cbind(as.data.frame(data_sorted), aux_sorted$dataHUGO)
 
-HMout_path = args[3]
-#HMout_path = '/home/alexey/ngs/NGS_Reporting_TestData/data/bcbio_postproc/Dev_0406/work/postproc/RNA_HM.csv'
 
 print('Writing HM result')
 print(HMout_path)
