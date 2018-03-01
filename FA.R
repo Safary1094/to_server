@@ -9,11 +9,14 @@ print("FA libraries loaded")
 
 args = commandArgs(trailingOnly=TRUE)
 
-
-
-#input_path = args[1]
-
-input_path = '~/ngs/NGS_Reporting_TestData/data/bcbio_postproc/Dev_0406/work/postproc/RNA_DE.csv'
+if (length(args) == 2) {
+  input_path = args[1]
+  proj_folder = args[2]
+} else {
+  print('Warning! No input parameters. Using defaults')
+  input_path = '~/ngs/NGS_Reporting_TestData/data/bcbio_postproc/Dev_0406/work/postproc/RNA_DE.csv'
+  proj_folder='/home/alexey/ngs/NGS_Reporting_TestData/data/bcbio_postproc/Dev_0406/work/postproc/'
+}
 
 raw_dataset = read.csv(file=input_path, header=TRUE)
 
@@ -50,8 +53,8 @@ gene_group_ens = strsplit(gseaKEGGSummary$core_enrichment[1], "/")
 bitr(as.character(gene_group_ens[[1]]), fromType = "ENTREZID", toType = "ENSEMBL", OrgDb="org.Hs.eg.db")
 
 # write files for each founded paths
-#proj_folder = args[2]
-proj_folder='/home/alexey/ngs/NGS_Reporting_TestData/data/bcbio_postproc/Dev_0406/work/postproc/'
+
+
 for (pw_id in pathways)
 {
   a=pathview(gene.data  = genes_obj,
