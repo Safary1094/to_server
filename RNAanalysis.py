@@ -2,20 +2,21 @@ import os
 import az
 import subprocess
 import pandas as pd
-from ngs_reporting.rnaseq import gene_expression
 from ngs_utils.file_utils import which, can_reuse, safe_mkdir, verify_file
-from ngs_reporting.rnaseq.table_css import table_css_string
+from ngs_reporting.rnaseq.table_to_html import table_to_html
 from os.path import join, dirname, isfile, abspath
 from ngs_utils.logger import debug, info, critical, err
 from ngs_utils.call_process import run
 import numpy as np
 from shutil import copyfile
 
+
 def load_id2name(proj):
     id2name = pd.read_csv(join(proj.local_ref_data, proj.genome_build, 'name_by_gene_id.csv'))
     id2name = id2name.set_index('ensId')
     id2name = id2name.to_dict()
     return id2name['Name']
+
 
 def load_tx2name(proj):
     tx2gene = pd.read_csv(join(proj.local_ref_data, proj.genome_build, 'name_by_transcript_id.csv'))
@@ -24,113 +25,79 @@ def load_tx2name(proj):
     return tx2gene['Gene']
 
 
-def annotateGeneCounts(proj, key_genes):
-    genes = pd.read_csv(proj.raw_expression_dir + '/combined.counts', sep = '\t')
-    # set gene_by_transcriptid and gene_by_geneid
-    gene_by_transcriptid, gene_by_geneid = gene_expression._parse_gene_transcripts_id(proj.genome_build, '')
-
-    for i in range(len(genes)):
-        gene_id = genes.at[i,'id']
-        if gene_id in gene_by_transcriptid:
-            genes.at[i, 'HUGO'] = gene_by_transcriptid[gene_id]
-        elif gene_id in gene_by_geneid:
-            genes.at[i, 'HUGO'] = gene_by_geneid[gene_id]
-
-    genes.dropna(inplace=True)
-    genes['index'] = range(len(genes))
-    genes.set_index('index', inplace=True)
-
-    for i in range(len(genes)):
-        gene_name= genes.at[i,'HUGO']
-        if gene_name in key_genes:
-            genes.at[i, 'is_key'] = True
-        else:
-            genes.at[i, 'is_key'] = False
-
-    genes.sort_values(by='id', inplace=True)
-    # for postproc
-    genes.to_csv(proj.expression_dir + '/combined.counts', index = False, sep = '\t')
-    # for RNAseq
-    genes.to_csv(proj.date_dir + '/combined.counts', index = False, sep = '\t')
-
-
-def make_full_expreesion_table(de_path, full_table_html_path):
-    if not can_reuse(full_table_html_path, de_path):
-        data = pd.read_csv(de_path)
-        data = data.dropna()
-        # make full external table
-        data = data[['HUGO', 'gene_names', 'p', 'lfc']]
-        data = data.rename(index=str, columns={'HUGO': 'HUGO name', 'gene_names': 'Gene index', 'p': 'Log10 p value adjusted', 'lfc': 'Log2 fold change'})
-        html_table_code = data.to_html(border=0, justify='left', index_names=False, index=False)
-        # add table id
-        table_id = 'diff_exp'
-        html_table_code = html_table_code.replace('<table border="0" class="dataframe">', '<table id="' + table_id + '" class="display">')
-        title = '<h3>Differentially expressed genes</h3><p>Shown only annotated genes</p>'
-        # jquery scripts
-        style = table_css_string
-        script1 = '<script type="text/javascript" charset="utf8" src="http://ajax.aspnetcdn.com/ajax/jQuery/jquery-1.8.2.min.js"></script>'
-        script2 = '<script type="text/javascript" charset="utf8" src="http://ajax.aspnetcdn.com/ajax/jquery.dataTables/1.9.4/jquery.dataTables.min.js"></script>'
-        script3 = '<script> $(function(){$("#' + table_id + '").dataTable({"iDisplayLength": 50}); })</script>'
-        # write combined html code
-        file_out = open(full_table_html_path, 'w')
-        file_out.write(title + style + html_table_code + script1 + script2 + script3)
-        file_out.close()
-
-    return full_table_html_path
-
-
-def transcript_level_html(tpm, TxLvl_html_path, full_link):
-
-    def fl_for(x):
-        return "%.3f" % x
-
-    tpm['Transcript index'] = tpm.index
-    tpm = tpm.drop(['is_key'], axis = 1)
-    tpm = tpm.rename(index=str,columns={'gene': 'Gene name'})
-    # reorder columns
-    gene_tx = tpm[['Gene name', 'Transcript index']]
-    tpm = tpm.drop(['Gene name', 'Transcript index'], axis = 1)
-    tpm = pd.concat([gene_tx, tpm], axis = 1)
-
-    html_table_code = tpm.to_html(float_format=fl_for, border=0, justify='left', index_names=False, index=False)
-    table_id = 'TxLevel'
-    html_table_code = html_table_code.replace('<table border="0" class="dataframe">','<table id="' + table_id + '" class="display">')
-    title = '<h3>Exon level</h3>Showing only key genes. \
-    The full results can be downloaded from here: \
-    <a href="'+ full_link + '">isoform_counts_full.tsv</a>'
-    # jquery scripts
-    style = table_css_string
-    script1 = '<script type="text/javascript" charset="utf8" src="http://ajax.aspnetcdn.com/ajax/jQuery/jquery-1.8.2.min.js"></script>'
-    script2 = '<script type="text/javascript" charset="utf8" src="http://ajax.aspnetcdn.com/ajax/jquery.dataTables/1.9.4/jquery.dataTables.min.js"></script>'
-    script3 = '<script> $(function(){$("#' + table_id + '").dataTable({"iDisplayLength": 50}); })</script>'
-    # write combined html code
-    file_out = open(TxLvl_html_path, 'w')
-    file_out.write(title + style + html_table_code + script1 + script2 + script3)
-    file_out.close()
-
-
-def transcript_summary(proj, key_gene_names):
+def run_tximport(proj):
+    # computes, gene_counts, gene_tpms, isoform tpms from quant.sf
+    pathEXC_R = dirname(__file__) + '/run_tximport.R'
+    cmdl = ['Rscript', pathEXC_R]
 
     local_quant_path = ['sailfish/quant', 'salmon']
-
     for sam in proj.samples:
-
         for p in local_quant_path:
             quant_path = join(sam.dirpath, p, 'quant.sf')
             if isfile(quant_path):
-                sam_qua = pd.read_table(quant_path)
+                cmdl.append(quant_path)
 
-        sam_qua = sam_qua.set_index('Name')
+    cmdl.append(proj.expression_dir)
+    cmdl = ' '.join(cmdl)
+    print(cmdl)
+    os.system(cmdl)
 
-        if 'tpm' not in locals():
-            tpm = pd.DataFrame(sam_qua['TPM'])
-            sam_names = [sam.name]
 
+def run_feature_counts(proj):
+    # computes, exon_counts from .bam
+    transcripts_file = az.get_refdata(proj.genome_build)['exon_annotation']
+    pathEXC_R = dirname(__file__) + '/exon_counts.R'
+    cmdl = ['Rscript', pathEXC_R]
+    for sam in proj.samples:
+        cmdl.append(join(sam.dirpath, sam.name + '-ready.bam'))
+    cmdl.append(proj.expression_dir)
+    cmdl.append(transcripts_file)
+
+    cmdl = ' '.join(cmdl)
+    print(cmdl)
+    os.system(cmdl)
+
+
+def calculate_expression_levels(proj):
+
+    run_tximport(proj)
+    run_feature_counts(proj)
+
+
+def exon_level_html(proj, key_gene_names):
+
+    exon = pd.read_csv(join(proj.expression_dir, 'exon_counts.csv'), index_col=0)
+
+    # add gene names
+    id2gene = load_id2name(proj)
+    exon['gene'] = 'NA'
+    for i in exon.index.tolist():
+        if i in id2gene:
+            exon.at[i, 'gene'] = id2gene[i]
         else:
-            tpm = pd.concat([tpm, sam_qua['TPM']], axis=1)
-            sam_names.append(sam.name)
+            print('Warning! gene index ' + str(i) + ' not found')
 
-    tpm.columns = sam_names
+    # rewrite annotated isoforms
+    full_link = join(proj.expression_dir, 'exon_counts.csv')
+    exon.to_csv(full_link)
+
+    # select key genes
+    exon_key = exon.loc[exon['gene'].isin(key_gene_names)]
+
+    # save html for key-genes
+    gradient_cols = [sam.name for sam in proj.samples]
+    title = '<h3>Exon level</h3>Showing only key genes. \
+    The full results can be downloaded from here: \
+    <a href="'+ full_link + '">exon_counts.csv</a>'
+
+    html_path = join(proj.expression_dir, 'html', 'exon_counts.html')
+    table_to_html(exon_key, gradient_cols, title, html_path)
+    proj.counts_names.append(html_path)
+
+
+def isoform_level_html(proj, key_gene_names):
+
+    tpm = pd.read_csv(join(proj.expression_dir, 'isoform_tpm.csv'), index_col=0)
 
     # add gene names
     tx2gene = load_tx2name(proj)
@@ -139,100 +106,86 @@ def transcript_summary(proj, key_gene_names):
         if i in tx2gene:
             tpm.at[i, 'gene'] = tx2gene[i]
         else:
-            print('Warning! transcript index ' + i + ' not found')
+            print('Warning! transcript index ' + str(i) + ' not found')
 
-    full_link = join(proj.expression_dir, 'isoform_counts_full.tsv')
-    tpm.to_csv(full_link, sep='\t')
+    # rewrite annotated isoforms
+    full_link = join(proj.expression_dir, 'isoform_tpm.csv')
+    tpm.to_csv(full_link)
 
-    # mark key genes
-    tpm['is_key'] = 'False'
-    for i in tpm.index.tolist():
-        if tpm.at[i,'gene'] in key_gene_names:
-            tpm.at[i, 'is_key'] = 'True'
+    # select key genes
+    tpm_key = tpm.loc[tpm['gene'].isin(key_gene_names)]
 
-    tpm_key = tpm.loc[tpm['is_key'] == 'True']
-
-    tx_lvl_html_path = proj.expression_dir + '/html/isoform.html'
-    transcript_level_html(tpm_key, tx_lvl_html_path, full_link)
-
-    tpm_key.to_csv(join(proj.final_dir, 'isoforms.tpm'), sep='\t')
-
-
-def exon_level_html(cnt, exLvl_html_path, full_link):
-
-    def fl_for(x):
-        return "%.3f" % x
-
-    cnt = cnt.drop(['is_key', 'GeneID'], axis = 1)
-    # cnt = cnt.rename(index=str,columns={'gene': 'Gene name'})
-    # reorder columns
-    ex_cnt = cnt[['gene', 'start', 'end']]
-    cnt = cnt.drop(['gene', 'start', 'end'], axis = 1)
-    ex_cnt = pd.concat([ex_cnt, cnt], axis = 1)
-
-    html_table_code = ex_cnt.to_html(float_format=fl_for, border=0, justify='left', index_names=False, index=False)
-    table_id = 'TxLevel'
-    html_table_code = html_table_code.replace('<table border="0" class="dataframe">','<table id="' + table_id + '" class="display">')
-    title = '<h3>Exon level</h3>Showing only key genes. \
+    # save html for key-genes
+    gradient_cols = [sam.name for sam in proj.samples]
+    title = '<h3>Isoform level</h3>Showing only key genes. \
     The full results can be downloaded from here: \
-    <a href="'+ full_link + '">exon_counts_full.tsv</a>'
+    <a href="'+ full_link + '">isoform_tpm.csv</a>'
 
-    # jquery scripts
-    style = table_css_string
-    script1 = '<script type="text/javascript" charset="utf8" src="http://ajax.aspnetcdn.com/ajax/jQuery/jquery-1.8.2.min.js"></script>'
-    script2 = '<script type="text/javascript" charset="utf8" src="http://ajax.aspnetcdn.com/ajax/jquery.dataTables/1.9.4/jquery.dataTables.min.js"></script>'
-    script3 = '<script> $(function(){$("#' + table_id + '").dataTable({"iDisplayLength": 50}); })</script>'
-    # write combined html code
-    file_out = open(exLvl_html_path, 'w')
-    file_out.write(title + style + html_table_code + script1 + script2 + script3)
-    file_out.close()
+    html_path = join(proj.expression_dir, 'html', 'isoforms_tpm.html')
+    table_to_html(tpm_key, gradient_cols, title, html_path)
+    proj.counts_names.append(html_path)
 
 
-def create_exon_counts_file(proj, key_gene_names):
+def gene_counts_html(proj, key_gene_names):
 
-    transcripts_file = az.get_refdata(proj.genome_build)['exon_annotation']
+    gcounts = pd.read_csv(join(proj.expression_dir, 'gene_counts.csv'), index_col=0)
 
-    for sam in proj.samples:
-        bam_path = join(sam.dirpath, sam.name + '-ready.bam')
-        out_file = join(proj.work_dir, sam.name + '_exon_counts.csv')
-
-        if not can_reuse(out_file, bam_path):
-            pathEXC_R = dirname(__file__) + '/exon_counts.R'
-            cmdl = ' '.join(['Rscript', pathEXC_R, bam_path, out_file, transcripts_file])
-            print(cmdl)
-            os.system(cmdl)
-
-        ex_cnt = pd.read_csv(out_file, skiprows=0, header=0)
-
-        if 'cnt' not in locals():
-            cnt = ex_cnt
-            cnt = cnt.drop('Unnamed: 0', axis=1)
+    # add gene names
+    id2gene = load_id2name(proj)
+    gcounts['gene'] = 'NA'
+    for i in gcounts.index.tolist():
+        if i in id2gene:
+            gcounts.at[i, 'gene'] = id2gene[i]
         else:
-            cnt = pd.concat([cnt, ex_cnt['counts']], axis=1)
+            print('Warning! gene index ' + str(i) + ' not found')
 
-        cnt = cnt.rename(columns={'counts': sam.name})
+    # rewrite annotated isoforms
+    full_link = join(proj.expression_dir, 'gene_counts.csv')
+    gcounts.to_csv(full_link)
 
-    # add gene name
-    id2name = load_id2name(proj)
-    cnt['gene'] = 'NA'
-    for i in cnt.index.tolist():
-        if cnt.at[i, 'GeneID'] in id2name:
-            cnt.at[i, 'gene'] = id2name[cnt.at[i, 'GeneID']]
+    # select key genes
+    gcounts_key = gcounts.loc[gcounts['gene'].isin(key_gene_names)]
 
-    full_link = join(proj.expression_dir, 'exon_counts_full.tsv')
-    cnt.to_csv(full_link, sep='\t')
+    # save html for key-genes
+    gradient_cols = [sam.name for sam in proj.samples]
+    title = '<h3>Gene counts</h3>Showing only key genes. \
+    The full results can be downloaded from here: \
+    <a href="'+ full_link + '">gene_counts.csv</a>'
 
-    # mark key genes
-    cnt['is_key'] = 'False'
-    for i in cnt.index.tolist():
-        if cnt.at[i, 'gene'] in key_gene_names:
-            cnt.at[i, 'is_key'] = 'True'
+    html_path = join(proj.expression_dir, 'html', 'gene_counts.html')
+    table_to_html(gcounts_key, gradient_cols, title, html_path)
+    proj.counts_names.append(html_path)
 
-    cnt_key = cnt.loc[cnt['is_key'] == 'True']
 
-    # make html-table
-    ex_lvl_html_path = proj.expression_dir + '/html/exon.html'
-    exon_level_html(cnt_key, ex_lvl_html_path, full_link)
+def gene_tpm_html(proj, key_gene_names):
+
+    gene_tpm = pd.read_csv(join(proj.expression_dir, 'gene_tpm.csv'), index_col=0)
+
+    # add gene names
+    id2gene = load_id2name(proj)
+    gene_tpm['gene'] = 'NA'
+    for i in gene_tpm.index.tolist():
+        if i in id2gene:
+            gene_tpm.at[i, 'gene'] = id2gene[i]
+        else:
+            print('Warning! gene index ' + str(i) + ' not found')
+
+    # rewrite annotated isoforms
+    full_link = join(proj.expression_dir, 'gene_tpm.csv')
+    gene_tpm.to_csv(full_link)
+
+    # select key genes
+    gene_tpm_key = gene_tpm.loc[gene_tpm['gene'].isin(key_gene_names)]
+
+    # save html for key-genes
+    gradient_cols = [sam.name for sam in proj.samples]
+    title = '<h3>Gene TPM</h3>Showing only key genes. \
+    The full results can be downloaded from here: \
+    <a href="'+ full_link + '">gene_tpm.csv</a>'
+
+    html_path = join(proj.expression_dir, 'html', 'gene_tpm.html')
+    table_to_html(gene_tpm_key, gradient_cols, title, html_path)
+    proj.counts_names.append(html_path)
 
 
 def run_DE(proj, de_out, hm_out):
@@ -243,7 +196,7 @@ def run_DE(proj, de_out, hm_out):
         cmd = ' '.join([pathRScript, pathDE_R, proj.final_dir, de_out, hm_out])
         print('Running:')
         print(cmd)
-        os.system(cmd)
+        # os.system(cmd)
 
 
 def run_QC(proj, out_file):
@@ -259,7 +212,7 @@ def run_QC(proj, out_file):
     # prepare file-links
 
     fnames = ['rawCounts.csv', 'normalizedCounts.csv', 'rlog.csv', 'vst.csv', \
-              'gene.est.csv', 'gene.final.csv', 'gene.fitted.csv', 'corMatrix.csv']
+              'gene.est.csv', 'gene.final.csv', 'gene.fitted.csv', 'corMatrix.csv', 'pca.csv']
     fnames = [join(out_file, f) for f in fnames]
 
     fnames.append(join(proj.date_dir, 'combined.counts'))
@@ -274,55 +227,81 @@ def run_FA(fa_in, fa_out):
         cmd = ' '.join([pathRScript, pathFA_R, fa_in, fa_out])
         print('Running:')
         print(cmd)
-        os.system(cmd)
+        # os.system(cmd)
 
     return join(fa_out, 'RNA_PW.csv')
+
+
+def diff_exp_genes_html(de_out, proj, key_gene_names):
+    de_gene = pd.read_csv(de_out, index_col=0)
+
+    # add gene names
+    id2gene = load_id2name(proj)
+    de_gene['gene'] = 'NA'
+    for i in de_gene.index.tolist():
+        if i in id2gene:
+            de_gene.at[i, 'gene'] = id2gene[i]
+        else:
+            print('Warning! gene index ' + str(i) + ' not found')
+
+    # rewrite annotated isoforms
+    full_link = join(proj.expression_dir, 'de_gene.csv')
+    de_gene.to_csv(full_link)
+
+    # select key genes
+    de_gene_key = de_gene.loc[de_gene['gene'].isin(key_gene_names)]
+
+    # save html for key-genes
+    gradient_cols = [sam.name for sam in proj.samples]
+    title = '<h3>DE genes</h3>Showing only key genes. \
+    The full results can be downloaded from here: \
+    <a href="'+ full_link + '">de_genes.csv</a>'
+
+    html_path = join(proj.expression_dir, 'html', 'de_genes.html')
+    table_to_html(de_gene_key, gradient_cols, title, html_path)
+    proj.counts_names.append(html_path)
 
 
 def run_analysis(proj, key_gene_names):
     info('*' * 70)
     info('running RNA analysis')
 
+    # expression levels
+    #calculate_expression_levels(proj)
 
-    gene_expression.make_heatmaps(proj, key_gene_names)
+    isoform_level_html(proj, key_gene_names)
+    # exon_level_html(proj, key_gene_names)
+    gene_counts_html(proj, key_gene_names)
+    gene_tpm_html(proj, key_gene_names)
 
-    # create_exon_counts_file(proj, key_gene_names)
+    # DE analysis
+    # rna_files_list = []
+    #
+    # if not isfile(join(proj.date_dir, 'project-summary.yaml')):
+    #     copyfile(join(proj.log_dir, 'project-summary.yaml'), join(proj.date_dir, 'project-summary.yaml'))
+    # if not isfile(join(proj.date_dir, 'combined.counts')):
+    #     copyfile(join(proj.expression_dir, 'combined.counts'), join(proj.date_dir, 'combined.counts'))
+    #
+    # safe_mkdir(proj.dir + '/work/postproc')
+    # de_out = proj.work_dir + '/RNA_DE.csv'
+    # hm_out = proj.work_dir + '/RNA_HM.csv'
+    # run_DE(proj, de_out, hm_out)
+    # rna_files_list.extend([de_out, hm_out])
+    #
+    # full_table_html_path = proj.expression_dir + '/html/diff_exp.html'
+    # diff_exp_genes_html(de_out, proj, key_gene_names)
+    # proj.full_expression_dir = full_table_html_path
+    #
+    # qc_out_dir = safe_mkdir(proj.work_dir + '/RNA_QC')
+    # qc_out_files = run_QC(proj, qc_out_dir)
+    #
+    # rna_files_list.extend(qc_out_files)
+    #
+    # fa_in = de_out
+    # fa_out = proj.work_dir + '/'
+    # fa_file = run_FA(fa_in, fa_out)
+    # rna_files_list.extend([fa_file])
+    #
+    # for p in rna_files_list:
+    #     proj.postproc_mqc_files.append(p)
 
-    # transcript_summary(proj, key_gene_names)
-
-
-
-    if not os.path.isfile(proj.expression_dir + '/combined.counts'):
-        annotateGeneCounts(proj, key_gene_names)
-
-    rna_files_list = []
-
-    if not isfile(join(proj.date_dir, 'project-summary.yaml')):
-        copyfile(join(proj.log_dir, 'project-summary.yaml'), join(proj.date_dir, 'project-summary.yaml'))
-    if not isfile(join(proj.date_dir, 'combined.counts')):
-        copyfile(join(proj.expression_dir, 'combined.counts'), join(proj.date_dir, 'combined.counts'))
-
-    safe_mkdir(proj.dir + '/work/postproc')
-    de_out = proj.work_dir + '/RNA_DE.csv'
-    hm_out = proj.work_dir + '/RNA_HM.csv'
-    run_DE(proj, de_out, hm_out)
-    rna_files_list.extend([de_out, hm_out])
-
-    full_table_html_path = proj.expression_dir + '/html/diff_exp.html'
-    make_full_expreesion_table(de_out, full_table_html_path)
-    proj.full_expression_dir = full_table_html_path
-
-    qc_out_dir = safe_mkdir(proj.work_dir + '/RNA_QC')
-    qc_out_files = run_QC(proj, qc_out_dir)
-
-    rna_files_list.extend(qc_out_files)
-
-    fa_in = de_out
-    fa_out = proj.work_dir + '/'
-    fa_file = run_FA(fa_in, fa_out)
-    rna_files_list.extend([fa_file])
-
-
-
-    for p in rna_files_list:
-        proj.postproc_mqc_files.append(p)
