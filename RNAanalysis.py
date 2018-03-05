@@ -69,18 +69,18 @@ def exon_level_html(proj, key_gene_names):
     exon = pd.read_csv(join(proj.expression_dir, 'exon_counts.csv'), index_col=0)
 
     # add gene names
-    id2gene = load_id2name(proj)
-    exon_index = exon.index.tolist()
-    gene_index = []
-    for i in exon_index:
-        if i in id2gene:
-            gene_index.append(id2gene[i])
-        else:
-            print('Warning! transcript index ' + str(i) + ' not found')
-            gene_index.append('NA')
-    se = pd.Series(gene_index)
-    exon['gene'] = se.values
-    exon = exon.reset_index()
+    if 'gene' not in list(exon):
+        id2gene = load_id2name(proj)
+        exon_index = exon.index.tolist()
+        gene_index = []
+        for i in exon_index:
+            if i in id2gene:
+                gene_index.append(id2gene[i])
+            else:
+                print('Warning! transcript index ' + str(i) + ' not found')
+                gene_index.append('NA')
+        se = pd.Series(gene_index)
+        exon.insert(0, 'gene', se.values)
 
     # rewrite annotated isoforms
     full_link = join(proj.expression_dir, 'exon_counts.csv')
@@ -88,6 +88,8 @@ def exon_level_html(proj, key_gene_names):
 
     # select key genes
     exon_key = exon.loc[exon['gene'].isin(key_gene_names)]
+    # drop index, to make it unique
+    exon_key = exon_key.reset_index()
 
     # save html for key-genes
     gradient_cols = [sam.name for sam in proj.samples]
@@ -106,18 +108,19 @@ def isoform_level_html(proj, key_gene_names):
     tpm = pd.read_csv(join(proj.expression_dir, 'isoform_tpm.csv'), index_col=0)
 
     # add gene names
-    tx2gene = load_tx2name(proj)
+    if 'gene' not in list(tpm):
+        tx2gene = load_tx2name(proj)
 
-    isof_index = tpm.index.tolist()
-    gene_index = []
-    for i in isof_index:
-        if i in tx2gene:
-            gene_index.append(tx2gene[i])
-        else:
-            print('Warning! transcript index ' + str(i) + ' not found')
-            gene_index.append('NA')
-    se = pd.Series(gene_index)
-    tpm['gene'] = se.values
+        isof_index = tpm.index.tolist()
+        gene_index = []
+        for i in isof_index:
+            if i in tx2gene:
+                gene_index.append(tx2gene[i])
+            else:
+                print('Warning! transcript index ' + str(i) + ' not found')
+                gene_index.append('NA')
+        se = pd.Series(gene_index)
+        tpm.insert(0, 'gene', se.values)
 
     # rewrite annotated isoforms
     full_link = join(proj.expression_dir, 'isoform_tpm.csv')
@@ -142,13 +145,19 @@ def gene_counts_html(proj, key_gene_names):
     gcounts = pd.read_csv(join(proj.expression_dir, 'gene_counts.csv'), index_col=0)
 
     # add gene names
-    id2gene = load_id2name(proj)
-    gcounts['gene'] = 'NA'
-    for i in gcounts.index.tolist():
-        if i in id2gene:
-            gcounts.at[i, 'gene'] = id2gene[i]
-        else:
-            print('Warning! gene index ' + str(i) + ' not found')
+    if 'gene' not in list(gcounts):
+        id2gene = load_id2name(proj)
+
+        isof_index = gcounts.index.tolist()
+        gene_index = []
+        for i in isof_index:
+            if i in id2gene:
+                gene_index.append(id2gene[i])
+            else:
+                print('Warning! gene id ' + str(i) + ' not found')
+                gene_index.append('NA')
+        se = pd.Series(gene_index)
+        gcounts.insert(0, 'gene', se.values)
 
     # rewrite annotated isoforms
     full_link = join(proj.expression_dir, 'gene_counts.csv')
@@ -173,13 +182,19 @@ def gene_tpm_html(proj, key_gene_names):
     gene_tpm = pd.read_csv(join(proj.expression_dir, 'gene_tpm.csv'), index_col=0)
 
     # add gene names
-    id2gene = load_id2name(proj)
-    gene_tpm['gene'] = 'NA'
-    for i in gene_tpm.index.tolist():
-        if i in id2gene:
-            gene_tpm.at[i, 'gene'] = id2gene[i]
-        else:
-            print('Warning! gene index ' + str(i) + ' not found')
+    if 'gene' not in list(gene_tpm):
+        id2gene = load_id2name(proj)
+
+        isof_index = gene_tpm.index.tolist()
+        gene_index = []
+        for i in isof_index:
+            if i in id2gene:
+                gene_index.append(id2gene[i])
+            else:
+                print('Warning! gene id ' + str(i) + ' not found')
+                gene_index.append('NA')
+        se = pd.Series(gene_index)
+        gene_tpm.insert(0, 'gene', se.values)
 
     # rewrite annotated isoforms
     full_link = join(proj.expression_dir, 'gene_tpm.csv')
@@ -278,7 +293,7 @@ def run_analysis(proj, key_gene_names):
     info('running RNA analysis')
 
     # expression levels
-    #calculate_expression_levels(proj)
+    calculate_expression_levels(proj)
 
     isoform_level_html(proj, key_gene_names)
     exon_level_html(proj, key_gene_names)
