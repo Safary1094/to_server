@@ -4,12 +4,14 @@ args = commandArgs(trailingOnly=TRUE)
 
 if (length(args)>0){
   print('Using input arguments')
-  sams = args[1:length(args)-1]
-  out_dir = args[length(args)]
+  sams = args[1:(length(args)-2)]
+  out_dir = args[length(args)-1]
+  tx2gene = read.csv(args[length(args)])
 } else {
   print('Using test arguments')
   sams = c('/home/alexey/ngs/NGS_Reporting_TestData/data/bcbio_postproc/Dev_0406/final/ILS38024-PT1-DS1_S1/salmon/quant.sf', '/home/alexey/ngs/NGS_Reporting_TestData/data/bcbio_postproc/Dev_0406/final/Karpas299_S4/salmon/quant.sf', '/home/alexey/ngs/NGS_Reporting_TestData/data/bcbio_postproc/Dev_0406/final/RT4_S2/salmon/quant.sf', '/home/alexey/ngs/NGS_Reporting_TestData/data/bcbio_postproc/Dev_0406/final/RT112_S3/salmon/quant.sf')
   out_dir = '/home/alexey/ngs/NGS_Reporting_TestData/data/bcbio_postproc/Dev_0406/final/2017-09-21_bcbio_rnaseq/expression'
+  tx2gene = read.csv('/home/alexey/ngs/NGS_Reporting_TestData/data/bcbio_postproc/Dev_0406/final/2017-09-21_bcbio_rnaseq/tx2gene.csv')
 }
 
 extract_sam_name = function(path) {
@@ -23,7 +25,7 @@ extract_sam_name = function(path) {
   }
 }
 
-tx2gene = read.csv('/home/alexey/ngs/NGS_Reporting_TestData/data/bcbio_postproc/Dev_0406/final/2017-09-21_bcbio_rnaseq/tx2gene.csv')
+
 
 gene_counts=tximport(files = sams, type = "salmon", tx2gene = tx2gene, txOut=FALSE)
 gene_counts = round(gene_counts$counts)
