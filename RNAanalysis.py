@@ -65,17 +65,22 @@ def calculate_expression_levels(proj):
 
 
 def exon_level_html(proj, key_gene_names):
-
+    print('exon_level_html')
     exon = pd.read_csv(join(proj.expression_dir, 'exon_counts.csv'), index_col=0)
 
     # add gene names
     id2gene = load_id2name(proj)
-    exon['gene'] = 'NA'
-    for i in exon.index.tolist():
+    exon_index = exon.index.tolist()
+    gene_index = []
+    for i in exon_index:
         if i in id2gene:
-            exon.at[i, 'gene'] = id2gene[i]
+            gene_index.append(id2gene[i])
         else:
-            print('Warning! gene index ' + str(i) + ' not found')
+            print('Warning! transcript index ' + str(i) + ' not found')
+            gene_index.append('NA')
+    se = pd.Series(gene_index)
+    exon['gene'] = se.values
+    exon = exon.reset_index()
 
     # rewrite annotated isoforms
     full_link = join(proj.expression_dir, 'exon_counts.csv')
@@ -96,17 +101,23 @@ def exon_level_html(proj, key_gene_names):
 
 
 def isoform_level_html(proj, key_gene_names):
+    print('isoform_level_html')
 
     tpm = pd.read_csv(join(proj.expression_dir, 'isoform_tpm.csv'), index_col=0)
 
     # add gene names
     tx2gene = load_tx2name(proj)
-    tpm['gene'] = 'NA'
-    for i in tpm.index.tolist():
+
+    isof_index = tpm.index.tolist()
+    gene_index = []
+    for i in isof_index:
         if i in tx2gene:
-            tpm.at[i, 'gene'] = tx2gene[i]
+            gene_index.append(tx2gene[i])
         else:
             print('Warning! transcript index ' + str(i) + ' not found')
+            gene_index.append('NA')
+    se = pd.Series(gene_index)
+    tpm['gene'] = se.values
 
     # rewrite annotated isoforms
     full_link = join(proj.expression_dir, 'isoform_tpm.csv')
@@ -127,7 +138,7 @@ def isoform_level_html(proj, key_gene_names):
 
 
 def gene_counts_html(proj, key_gene_names):
-
+    print('gene_counts_html')
     gcounts = pd.read_csv(join(proj.expression_dir, 'gene_counts.csv'), index_col=0)
 
     # add gene names
@@ -158,7 +169,7 @@ def gene_counts_html(proj, key_gene_names):
 
 
 def gene_tpm_html(proj, key_gene_names):
-
+    print('gene_tpm_html')
     gene_tpm = pd.read_csv(join(proj.expression_dir, 'gene_tpm.csv'), index_col=0)
 
     # add gene names
@@ -270,7 +281,7 @@ def run_analysis(proj, key_gene_names):
     #calculate_expression_levels(proj)
 
     isoform_level_html(proj, key_gene_names)
-    # exon_level_html(proj, key_gene_names)
+    exon_level_html(proj, key_gene_names)
     gene_counts_html(proj, key_gene_names)
     gene_tpm_html(proj, key_gene_names)
 
