@@ -2,40 +2,48 @@ library(Rsubread)
 
 args = commandArgs(trailingOnly=TRUE)
 
-ann = args[3]
-#ann = '/ngs/reference_data/genomes/Hsapiens/hg38/rnaseq/ref-transcripts.gtf'
-#ann = '/home/alexey/Downloads/ref-transcripts.cancer.trx.gtf'
+if (length(args)>0){
+  print('Using input arguments')
+  bams = args[1:(length(args)-2)]
+  out_dir = args[length(args)-1]
+  ann = args[length(args)]
+} else {
+  print('Using test arguments')
+  bams = c('/home/alexey/ngs/NGS_Reporting_TestData/data/bcbio_postproc/Dev_0406/final/ILS38024-PT1-DS1_S1/ILS38024-PT1-DS1_S1-ready.bam', '/home/alexey/ngs/NGS_Reporting_TestData/data/bcbio_postproc/Dev_0406/final/Karpas299_S4/Karpas299_S4-ready.bam', '/home/alexey/ngs/NGS_Reporting_TestData/data/bcbio_postproc/Dev_0406/final/RT4_S2/RT4_S2-ready.bam', '/home/alexey/ngs/NGS_Reporting_TestData/data/bcbio_postproc/Dev_0406/final/RT112_S3/RT112_S3-ready.bam')
+  out_dir = '/home/alexey/ngs/NGS_Reporting_TestData/data/bcbio_postproc/Dev_0406/final/2017-09-21_bcbio_rnaseq/expression'
+  ann = '/home/alexey/Downloads/ref-transcripts.dexseq.gff3'
+}
 
-bam = args[1]
-#bam = '/ngs/oncology/Analysis/external/EXT_087_Novogene_CDK9i_RNASeq/rnaseq/final/TR4h_Repeat1'
-#bam = '/home/alexey/ngs/NGS_Reporting_TestData/data/bcbio_postproc/bams/syn3-normal-ready.bam'
+extract_bam_name = function(path) {
+  path_split = strsplit(path, split = '/')
+  path_split = path_split[[1]]
+  
+  for ( i in 1:length(path_split)) {
+    if (path_split[i] == "final"){
+      return (path_split[i+1])
+    }
+  }
+}
 
-outp = args[2]
-#outp = '/ngs/usr/safary/exon.csv'
-
-#GTF.attrType = "exon_id",
-
-print('bam:')
-print(bam)
+print('bams:')
+print(bams)
 print('ann:')
 print(ann)
 
-res_exons <- featureCounts(files = bam, annot.ext = ann, isGTFAnnotationFile = T,  useMetaFeatures = F, allowMultiOverlap = T, nthreads = 4, countMultiMappingReads = F, GTF.featureType = 'exonic_part', fraction = 0.9, isPairedEnd = T)
+res_exons <- featureCounts(files = bams, annot.ext = ann, isGTFAnnotationFile = T,  useMetaFeatures = F, allowMultiOverlap = T, nthreads = 4, countMultiMappingReads = F, GTF.featureType = 'exonic_part', fraction = 0.9, isPairedEnd = T)
 
-data = cbind(res_exons$counts, res_exons$annotation$Start, res_exons$annotation$End)
+data = res_exons$counts
 
-n = as.data.frame(res_exons$annotation$GeneID)
-c = as.data.frame(res_exons$counts)
-s = as.data.frame(res_exons$annotation$Start)
-e = as.data.frame(res_exons$annotation$End)
+names = c()
+for (bam in bams){
+  names = c(names, extract_bam_name(bam))
+}
 
-a = data.frame(n, s, e, c)
+colnames(data)=names
 
-colnames(a)[1] <- "GeneID"
-colnames(a)[2] <- "start"
-colnames(a)[3] <- "end"
-colnames(a)[4] <- "counts"
+print('out_dir:')
+print(out_dir)
+write.csv(data, file.path(out_dir, 'exon_counts.csv'))
 
-print('outp:')
-print(outp)
-write.csv(a, outp)
+
+ 
