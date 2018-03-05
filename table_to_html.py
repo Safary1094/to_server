@@ -44,23 +44,17 @@ def calc_row_stats(row):
     return row_min, row_max, row_med, row_is_all_values_equal, row_low_outer_fence, row_low_inner_fence, row_top_outer_fence, row_top_inner_fence
 
 
-def set_cell_colors(data, gradient_cols):
+def set_cell_colors(row):
 
-    if data.ndim > 1:
+    if row.ndim > 1:
         return ''
 
-    row = data[gradient_cols]
     row_min, row_max, row_med, is_all_values_equal, low_outer_fence, low_inner_fence, top_outer_fence, top_inner_fence = calc_row_stats(row)
 
     # Color heatmap
     bg_color_attr  = []
     txt_color_attr = []
-    for i, r in enumerate(data):
-        if data.index.tolist()[i] not in gradient_cols:
-            txt_color_attr.append('')
-            bg_color_attr.append('')
-            continue
-
+    for i, r in enumerate(row):
         text_color = 'black'
         color = 'white'
         if r is not None:
@@ -121,7 +115,6 @@ def hsl2rgb(h, s, l):
 
     return map(int, [round(r * 255), round(g * 255), round(b * 255)])
 
-
 def get_color(hue, lightness):
     lightness = lightness or 92
     # lightness = Math.round (Math.pow hue - 75, 2) / 350 + 35
@@ -133,6 +126,9 @@ def get_color(hue, lightness):
 def table_to_html(table, gradient_cols, title, path):
     table_id = 'Level'
 
+    N = len(gradient_cols)
+    num_of_cols = len(table.columns)
+
     max_name = len(max(gradient_cols, key=len))
     col_height = str(max_name * 10) + "px"
 
@@ -143,8 +139,8 @@ def table_to_html(table, gradient_cols, title, path):
         dict(selector="td", props=[("padding", "4px")]),
         dict(selector="thead th:first-child", props=[("display", "none")]),
         dict(selector="tbody th:first-child", props=[("display", "none")]),
-        dict(selector="thead th", props=[("height",col_height)]),
-        dict(selector="th:nth-child(n+4)", props=[("transform", "rotate(-90deg)"),
+        dict(selector="thead th", props=[("height", col_height)]),
+        dict(selector="th:nth-child(n+" + str(num_of_cols - N + 2) + ")", props=[("transform", "rotate(-90deg)"),
                                                   ("-webkit-transform", "rotate(-90deg)"),
                                                   ("-moz-transform", "rotate(-90deg)"),
                                                   ("-o-transform", "rotate(-90deg)"),
@@ -155,7 +151,7 @@ def table_to_html(table, gradient_cols, title, path):
                                                     ("-o-width","100px"),
                                                     ("-ms-width","100px")
                                                   ]),
-        dict(selector="tr td:nth-child(n+4)", props=[("text-align", "right"),
+        dict(selector="tr td:nth-child(n+" + str(num_of_cols - N + 2) + ")", props=[("text-align", "right"),
                                                         ("width","100px"),
                                                         ("-webkit-width","100px"),
                                                         ("-moz-width","100px"),
@@ -163,7 +159,7 @@ def table_to_html(table, gradient_cols, title, path):
                                                         ("-ms-width","100px")])
         ]
 
-    styler = table.round(2).style.set_uuid(table_id).apply(set_cell_colors, gradient_cols=gradient_cols, axis=1).set_table_styles(styles)
+    styler = table.round(2).style.set_uuid(table_id).apply(set_cell_colors, subset=gradient_cols, axis=1).set_table_styles(styles)
 
     script1 = '<script type="text/javascript" charset="utf8" src=' \
               '"http://ajax.aspnetcdn.com/ajax/jQuery/jquery-1.8.2.min.js"' \
