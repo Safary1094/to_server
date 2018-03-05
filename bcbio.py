@@ -317,7 +317,7 @@ class BcbioProject:
     oncoprints_dir = 'oncoprints'
 
     ## RNAseq
-    counts_names = ['combined.counts', 'combined.exon', 'combined.gene.sf.tpm', 'combined.isoform']
+    counts_names = []
     expression_dir = 'expression'
 
     multiqc_report_name = 'report.html'
@@ -353,6 +353,7 @@ class BcbioProject:
         self.is_wgs = None
         self.is_rnaseq = None
         self.postproc_mqc_files=[]
+        self.local_ref_data =join(dirname(__file__), '..', '..', 'NGS_Reporting', 'ngs_reporting', 'reference_data')
 
         if input_dir:
             self.load_from_bcbio_dir(input_dir, project_name, proc_name)

@@ -97,14 +97,11 @@ def make_report_metadata(bcbio_proj, base_dirpath,
 
     # PCA plot
     if bcbio_proj.is_rnaseq:
-        gene_counts_fpath = join(bcbio_proj.expression_dir, 'counts.tsv')
-        if not isfile(gene_counts_fpath):
-            gene_counts_fpath = join(bcbio_proj.expression_dir, 'combined.counts')
-        if gene_counts_fpath:
-            pca_plot_fpath = create_rnaseq_pca_plot(bcbio_proj, gene_counts_fpath)
-            debug()
-            if pca_plot_fpath and verify_file(pca_plot_fpath):
-                additional_files.append(pca_plot_fpath)
+        gene_counts_fpath = join(bcbio_proj.expression_dir, 'gene_counts.csv')
+        pca_plot_fpath = create_rnaseq_pca_plot(bcbio_proj, gene_counts_fpath)
+        debug()
+        if pca_plot_fpath and verify_file(pca_plot_fpath):
+            additional_files.append(pca_plot_fpath)
 
     # QC DE FA
     for l in bcbio_proj.postproc_mqc_files:
@@ -115,12 +112,12 @@ def make_report_metadata(bcbio_proj, base_dirpath,
 
 
 def _rna_general_links(bcbio_proj, base_dirpath):
-    expression_dir = join(bcbio_proj.date_dir, BcbioProject.expression_dir)
     links = []
-    for fname, text in zip(BcbioProject.counts_names, ['Gene counts', 'Exon counts', 'Gene TPM', 'Isoform TPM']):
-        html_path = join(expression_dir, 'html', fname.replace('combined.', '').replace('.tsv', '') + '.html')
-        if isfile(html_path):
-            links.append(_make_link(html_path, base_dirpath, text))
+    for fname in BcbioProject.counts_names:
+        text = fname.split('/')[-1]
+        text = text.replace('.html', '')
+        if isfile(fname):
+            links.append(_make_link(fname, base_dirpath, text))
     return links
 
 
