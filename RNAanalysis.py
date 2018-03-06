@@ -38,7 +38,7 @@ def run_tximport(proj):
                 cmdl.append(quant_path)
 
     cmdl.append(proj.expression_dir)
-    cmdl.append(join(proj.local_ref_data, proj.genome_build, 'name_by_transcript_id.csv'))
+    cmdl.append(join(proj.date_dir, 'tx2gene.csv'))
     cmdl = ' '.join(cmdl)
     print(cmdl)
     os.system(cmdl)
@@ -62,7 +62,7 @@ def run_feature_counts(proj):
 def calculate_expression_levels(proj):
 
     run_tximport(proj)
-    # run_feature_counts(proj)
+    run_feature_counts(proj)
 
 
 def exon_level_html(proj, key_gene_names):
@@ -296,10 +296,10 @@ def run_analysis(proj, key_gene_names):
     # expression levels
     calculate_expression_levels(proj)
 
-    # isoform_level_html(proj, key_gene_names)
-    # exon_level_html(proj, key_gene_names)
-    # gene_counts_html(proj, key_gene_names)
-    # gene_tpm_html(proj, key_gene_names)
+    isoform_level_html(proj, key_gene_names)
+    exon_level_html(proj, key_gene_names)
+    gene_counts_html(proj, key_gene_names)
+    gene_tpm_html(proj, key_gene_names)
 
     # DE analysis
     # rna_files_list = []

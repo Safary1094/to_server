@@ -1,7 +1,4 @@
-import os
 import pandas as pd
-from os.path import join, dirname, isfile, abspath
-
 import numpy as np
 from math import floor
 from ngs_utils.utils import mean
@@ -45,7 +42,6 @@ def calc_row_stats(row):
 
 
 def set_cell_colors(row):
-
     if row.ndim > 1:
         return ''
 
@@ -53,24 +49,19 @@ def set_cell_colors(row):
 
     # Color heatmap
     bg_color_attr  = []
-    txt_color_attr = []
     for i, r in enumerate(row):
-        text_color = 'black'
         color = 'white'
         if r is not None:
             [top_hue, inner_top_brt, outer_top_brt] = [BLUE_HUE, BLUE_INNER_BRT, BLUE_OUTER_BRT]
             [low_hue, inner_low_brt, outer_low_brt] = [RED_HUE, RED_INNER_BRT, RED_OUTER_BRT]
 
             if not is_all_values_equal:
-                text_color = 'black'
-
                 # Low outliers
                 if r < low_outer_fence and r < row_med:
                     color = get_color(low_hue, outer_low_brt)
-                    text_color = 'white'
 
                 elif r < low_inner_fence and r < row_med:
-                    text_color = get_color(low_hue, inner_low_brt)
+                    color = get_color(low_hue, inner_low_brt)
 
                 # Normal values
                 elif r < row_med:
@@ -86,7 +77,14 @@ def set_cell_colors(row):
                 elif r > top_inner_fence and r > row_med:
                     color = get_color(top_hue, inner_top_brt)
 
-        txt_color_attr.append('color: {}'.format(text_color))
+                elif r > top_outer_fence and r > row_med:
+                    color = get_color(top_hue, outer_top_brt)
+
+                elif r > row_med:
+                    k = float(MEDIAN_BRT - MIN_NORMAL_BRT) / (top_inner_fence - row_med)
+                    brt = round(MEDIAN_BRT - (r - row_med) * k)
+                    color = get_color(top_hue, brt)
+                    
         bg_color_attr.append('background-color: {}'.format(color))
 
     return bg_color_attr
@@ -172,3 +170,4 @@ def table_to_html(table, gradient_cols, title, path):
     # write combined html code
     with open(path, 'w') as file_out:
         file_out.write(title + styler.render() + script1 + script2 + script3)
+
