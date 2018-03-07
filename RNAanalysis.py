@@ -9,6 +9,7 @@ from ngs_utils.logger import debug, info, critical, err
 from ngs_utils.call_process import run
 import numpy as np
 from shutil import copyfile
+import yaml
 
 
 def load_id2name(proj):
@@ -288,6 +289,25 @@ def diff_exp_genes_html(de_out, proj, key_gene_names):
     proj.counts_names.append(html_path)
 
 
+def prepare_project_summary(proj):
+
+    path = join(proj.date_dir, 'project-summary.yaml')
+
+    if not isfile(path):
+        copyfile(join(proj.log_dir, 'project-summary.yaml'), path)
+
+    stream = open(path, 'r')
+    data = yaml.load(stream)
+
+    # stupid group assignment
+    gr_id = 1
+    for s in data['samples']:
+        gr_id *= -1
+        s['metadata']['group'] = 'g' + str(gr_id)
+
+    stream2 = open(path, 'w')
+    yaml.dump(data, stream2)
+
 def run_analysis(proj, key_gene_names):
     info('*' * 70)
     info('running RNA analysis')
@@ -303,8 +323,7 @@ def run_analysis(proj, key_gene_names):
     # DE analysis
     rna_files_list = []
 
-    if not isfile(join(proj.date_dir, 'project-summary.yaml')):
-        copyfile(join(proj.log_dir, 'project-summary.yaml'), join(proj.date_dir, 'project-summary.yaml'))
+    prepare_project_summary(proj)
     if not isfile(join(proj.date_dir, 'combined.counts')):
         copyfile(join(proj.expression_dir, 'combined.counts'), join(proj.date_dir, 'combined.counts'))
 
