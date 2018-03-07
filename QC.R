@@ -5,10 +5,10 @@ library(bcbioRNASeq)
 # Load bcbioRNASeq object
 args = commandArgs(trailingOnly=TRUE)
 
-#project_path = args[1]
-project_path = '/home/alexey/ngs/NGS_Reporting_TestData/data/bcbio_postproc/Dev_0406/final/'
+project_path = args[1]
+#project_path = '/home/alexey/ngs/NGS_Reporting_TestData/data/bcbio_postproc/Dev_0406/final/'
 
-bcb = loadRNASeq(project_path, interestingGroups = "group")
+bcb = loadRNASeq(project_path)
 
 # Directory paths (has to be inside the project directory)
 outputDir = args[2]
@@ -69,9 +69,3 @@ gene.final = as.data.frame(cbind(px, py3, gene.names))
 
 #data for the Dispersion section
 writeCounts(gene.est, gene.fitted, gene.final, dir = dataDir, gzip=FALSE)
-
-data = read.table('/home/alexey/ngs/NGS_Reporting_TestData/data/bcbio_postproc/Dev_0406/final/2017-09-21_bcbio_rnaseq/combined.counts')
-
-data_mat=data.matrix(data[2:dim(data)[1], c("V2", "V3","V4", "V5")])
-cData = data.frame(c("V2", "V3","V4", "V5"))
-dds_new = DESeqDataSetFromMatrix(countData = data_mat, colData = cData, design = ~ factor(c("V3", "V4")))

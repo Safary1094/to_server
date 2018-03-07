@@ -57,22 +57,9 @@ class MultiqcModule(BaseMultiqcModule):
         self.plot_pca(pca_data)
 
     def plot_pca(self, pca_data):
-
         standard_colors = [
-            '#0000FF',
-            '#008000',
-            '#FFA500',
-            '#FF00FF',
-            '#CCCC00',
-            '#800000',
-            '#00CCCC',
-            '#808080',
-            '#800080',
-            '#808000',
-            '#000080',
-            '#008080',
-            '#00FF00',
-        ]
+            '#0000FF', '#008000', '#FFA500', '#FF00FF', '#CCCC00', '#800000',
+            '#00CCCC', '#808080', '#800080', '#808000', '#000080', '#008080', '#00FF00',]
 
         for i in pca_data.index.tolist():
             pca_data.at[i, 'color'] = standard_colors[i % len(standard_colors)]

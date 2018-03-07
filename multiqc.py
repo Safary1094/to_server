@@ -95,14 +95,6 @@ def make_report_metadata(bcbio_proj, base_dirpath,
     if preseq_config:
         conf['preseq'] = preseq_config
 
-    # PCA plot
-    if bcbio_proj.is_rnaseq:
-        gene_counts_fpath = join(bcbio_proj.expression_dir, 'gene_counts.csv')
-        pca_plot_fpath = create_rnaseq_pca_plot(bcbio_proj, gene_counts_fpath)
-        debug()
-        if pca_plot_fpath and verify_file(pca_plot_fpath):
-            additional_files.append(pca_plot_fpath)
-
     # QC DE FA
     for l in bcbio_proj.postproc_mqc_files:
         additional_files.append(l)

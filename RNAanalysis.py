@@ -60,7 +60,6 @@ def run_feature_counts(proj):
 
 
 def calculate_expression_levels(proj):
-
     run_tximport(proj)
     run_feature_counts(proj)
 
@@ -294,20 +293,25 @@ def run_analysis(proj, key_gene_names):
     info('running RNA analysis')
 
     # expression levels
-    calculate_expression_levels(proj)
-
-    isoform_level_html(proj, key_gene_names)
-    exon_level_html(proj, key_gene_names)
-    gene_counts_html(proj, key_gene_names)
-    gene_tpm_html(proj, key_gene_names)
+    # calculate_expression_levels(proj)
+    #
+    # isoform_level_html(proj, key_gene_names)
+    # exon_level_html(proj, key_gene_names)
+    # gene_counts_html(proj, key_gene_names)
+    # gene_tpm_html(proj, key_gene_names)
 
     # DE analysis
-    # rna_files_list = []
-    #
-    # if not isfile(join(proj.date_dir, 'project-summary.yaml')):
-    #     copyfile(join(proj.log_dir, 'project-summary.yaml'), join(proj.date_dir, 'project-summary.yaml'))
-    # if not isfile(join(proj.date_dir, 'combined.counts')):
-    #     copyfile(join(proj.expression_dir, 'combined.counts'), join(proj.date_dir, 'combined.counts'))
+    rna_files_list = []
+
+    if not isfile(join(proj.date_dir, 'project-summary.yaml')):
+        copyfile(join(proj.log_dir, 'project-summary.yaml'), join(proj.date_dir, 'project-summary.yaml'))
+    if not isfile(join(proj.date_dir, 'combined.counts')):
+        copyfile(join(proj.expression_dir, 'combined.counts'), join(proj.date_dir, 'combined.counts'))
+
+    qc_out_dir = safe_mkdir(proj.work_dir + '/RNA_QC')
+    qc_out_files = run_QC(proj, qc_out_dir)
+
+    rna_files_list.extend(qc_out_files)
     #
     # safe_mkdir(proj.dir + '/work/postproc')
     # de_out = proj.work_dir + '/RNA_DE.csv'
@@ -319,16 +323,13 @@ def run_analysis(proj, key_gene_names):
     # diff_exp_genes_html(de_out, proj, key_gene_names)
     # proj.full_expression_dir = full_table_html_path
     #
-    # qc_out_dir = safe_mkdir(proj.work_dir + '/RNA_QC')
-    # qc_out_files = run_QC(proj, qc_out_dir)
-    #
-    # rna_files_list.extend(qc_out_files)
+
     #
     # fa_in = de_out
     # fa_out = proj.work_dir + '/'
     # fa_file = run_FA(fa_in, fa_out)
     # rna_files_list.extend([fa_file])
     #
-    # for p in rna_files_list:
-    #     proj.postproc_mqc_files.append(p)
+    for p in rna_files_list:
+        proj.postproc_mqc_files.append(p)
 
