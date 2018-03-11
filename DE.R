@@ -19,11 +19,13 @@ if (length(args) == 3) {
   HMout_path = '/home/alexey/ngs/NGS_Reporting_TestData/data/bcbio_postproc/Dev_0406/work/postproc/RNA_HM.csv'
 }
 
+#real_project_path = '/ngs/oncology/Analysis/dev/Dev_0479_HiSeq2500_STAT3_Targeted_RNASeq_set1_pool4/bcbio_rnaseq/final'
+
 print('Reading project')
 print(real_project_path)
 
-interest_gr = c("sampleName")
-bcb = loadRNASeq(uploadDir = real_project_path, interestingGroups = interest_gr)
+interest_gr = c("batch")
+bcb = loadRNASeq(uploadDir = real_project_path)
 
 raw_dataset = paste(bcb@metadata$projectDir, 'combined.counts', sep='/')
 raw_dataset = read.csv(file=raw_dataset, header=TRUE, sep="\t")
