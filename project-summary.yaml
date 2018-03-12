@@ -1,0 +1,244 @@
+date: '2018-02-11 17:51:38.900968'
+upload: /ngs/reports/safary_test/real_rna_groups/final
+bcbio_system: /apps/bcbio-nextgen/1.0.6/rhel6-x64/galaxy/bcbio_system.yaml
+samples:
+- description: 13_S13
+  dirs:
+    config: /apps/bcbio-nextgen/1.0.6/rhel6-x64/galaxy
+    fastq: null
+    flowcell: null
+    galaxy: /apps/bcbio-nextgen/1.0.6/rhel6-x64/galaxy
+    work: /ngs/reports/safary_test/real_rna_groups/work
+  genome_build: hg38
+  genome_resources:
+    aliases:
+      ensembl: homo_sapiens_merged_vep_89_GRCh38
+      human: true
+      snpeff: GRCh38.86
+    rnaseq:
+      dexseq: /ngs/reference_data/genomes/Hsapiens/hg38/rnaseq/ref-transcripts.dexseq.gff3
+      gene_bed: /ngs/reference_data/genomes/Hsapiens/hg38/rnaseq/ref-transcripts.bed
+      rRNA_fa: ../rnaseq/rRNA.fa
+      refflat: /ngs/reference_data/genomes/Hsapiens/hg38/rnaseq/ref-transcripts.refFlat
+      transcriptome_index:
+        tophat: /ngs/reference_data/genomes/Hsapiens/hg38/rnaseq/tophat/hg38_transcriptome.ver
+      transcripts: /ngs/reference_data/genomes/Hsapiens/hg38/rnaseq/ref-transcripts.gtf
+      transcripts_mask: /ngs/reference_data/genomes/Hsapiens/hg38/rnaseq/ref-transcripts-mask.gtf
+    variation:
+      cosmic: null
+      dbnsfp: ../variation/dbNSFP.txt.gz
+      dbscsnv: ../variation/dbscSNV.txt.gz
+      dbsnp: /ngs/reference_data/genomes/Hsapiens/hg38/variation/dbsnp-150.vcf.gz
+      genesplicer: /ngs/reference_data/genomes/Hsapiens/hg38/variation/genesplicer
+      lcr: /ngs/reference_data/genomes/Hsapiens/hg38/coverage/problem_regions/repeats/LCR.bed.gz
+      qsignature: /ngs/reference_data/genomes/Hsapiens/hg38/variation/qsignature.txt
+      sv_repeat: /ngs/reference_data/genomes/Hsapiens/hg38/coverage/problem_regions/repeats/sv_repeat_telomere_centromere.bed
+      train_1000g: /ngs/reference_data/genomes/Hsapiens/hg38/variation/1000G_phase1.snps.high_confidence.vcf.gz
+      train_hapmap: /ngs/reference_data/genomes/Hsapiens/hg38/variation/hapmap_3.3.vcf.gz
+      train_indels: /ngs/reference_data/genomes/Hsapiens/hg38/variation/Mills_and_1000G_gold_standard.indels.vcf.gz
+      train_omni: /ngs/reference_data/genomes/Hsapiens/hg38/variation/1000G_omni2.5.vcf.gz
+    version: 19
+  metadata:
+    batch: null
+    phenotype: ''
+  sam_ref: /ngs/reference_data/genomes/Hsapiens/hg38/seq/hg38.fa
+  summary:
+    metrics:
+      '%GC': '52'
+      5'-3' bias: 0.19
+      Average_insert_size: 0.0
+      Average_read_length: 75.0
+      Duplicates: 0.0
+      Duplication Rate of Mapped: 0.3118478370444493
+      Exonic Rate: 0.31679999999999997
+      Intergenic Rate: 0.4193
+      Intronic Rate: 0.2638
+      Mapped_paired_reads: 0.0
+      Mapped_reads: 5288214.0
+      Name: 13_S13
+      Quality format: standard
+      Sequence length: 35-76
+      Sequences flagged as poor quality: '0'
+      Total_reads: 5419588.0
+      rRNA: '66571.445011'
+      rRNA_rate: '0.0189918057748'
+- description: 11_S11
+  dirs:
+    config: /apps/bcbio-nextgen/1.0.6/rhel6-x64/galaxy
+    fastq: null
+    flowcell: null
+    galaxy: /apps/bcbio-nextgen/1.0.6/rhel6-x64/galaxy
+    work: /ngs/reports/safary_test/real_rna_groups/work
+  genome_build: hg38
+  genome_resources:
+    aliases:
+      ensembl: homo_sapiens_merged_vep_89_GRCh38
+      human: true
+      snpeff: GRCh38.86
+    rnaseq:
+      dexseq: /ngs/reference_data/genomes/Hsapiens/hg38/rnaseq/ref-transcripts.dexseq.gff3
+      gene_bed: /ngs/reference_data/genomes/Hsapiens/hg38/rnaseq/ref-transcripts.bed
+      rRNA_fa: ../rnaseq/rRNA.fa
+      refflat: /ngs/reference_data/genomes/Hsapiens/hg38/rnaseq/ref-transcripts.refFlat
+      transcriptome_index:
+        tophat: /ngs/reference_data/genomes/Hsapiens/hg38/rnaseq/tophat/hg38_transcriptome.ver
+      transcripts: /ngs/reference_data/genomes/Hsapiens/hg38/rnaseq/ref-transcripts.gtf
+      transcripts_mask: /ngs/reference_data/genomes/Hsapiens/hg38/rnaseq/ref-transcripts-mask.gtf
+    variation:
+      cosmic: null
+      dbnsfp: ../variation/dbNSFP.txt.gz
+      dbscsnv: ../variation/dbscSNV.txt.gz
+      dbsnp: /ngs/reference_data/genomes/Hsapiens/hg38/variation/dbsnp-150.vcf.gz
+      genesplicer: /ngs/reference_data/genomes/Hsapiens/hg38/variation/genesplicer
+      lcr: /ngs/reference_data/genomes/Hsapiens/hg38/coverage/problem_regions/repeats/LCR.bed.gz
+      qsignature: /ngs/reference_data/genomes/Hsapiens/hg38/variation/qsignature.txt
+      sv_repeat: /ngs/reference_data/genomes/Hsapiens/hg38/coverage/problem_regions/repeats/sv_repeat_telomere_centromere.bed
+      train_1000g: /ngs/reference_data/genomes/Hsapiens/hg38/variation/1000G_phase1.snps.high_confidence.vcf.gz
+      train_hapmap: /ngs/reference_data/genomes/Hsapiens/hg38/variation/hapmap_3.3.vcf.gz
+      train_indels: /ngs/reference_data/genomes/Hsapiens/hg38/variation/Mills_and_1000G_gold_standard.indels.vcf.gz
+      train_omni: /ngs/reference_data/genomes/Hsapiens/hg38/variation/1000G_omni2.5.vcf.gz
+    version: 19
+  metadata:
+    batch: null
+    phenotype: ''
+  sam_ref: /ngs/reference_data/genomes/Hsapiens/hg38/seq/hg38.fa
+  summary:
+    metrics:
+      '%GC': '51'
+      5'-3' bias: 0.16
+      Average_insert_size: 0.0
+      Average_read_length: 75.0
+      Duplicates: 0.0
+      Duplication Rate of Mapped: 0.3121924704855989
+      Exonic Rate: 0.3184
+      Intergenic Rate: 0.4219
+      Intronic Rate: 0.2597
+      Mapped_paired_reads: 0.0
+      Mapped_reads: 5162184.0
+      Name: 11_S11
+      Quality format: standard
+      Sequence length: 35-76
+      Sequences flagged as poor quality: '0'
+      Total_reads: 5318498.0
+      rRNA: '66367.817037'
+      rRNA_rate: '0.0191373897664'
+- description: 10_S10
+  dirs:
+    config: /apps/bcbio-nextgen/1.0.6/rhel6-x64/galaxy
+    fastq: null
+    flowcell: null
+    galaxy: /apps/bcbio-nextgen/1.0.6/rhel6-x64/galaxy
+    work: /ngs/reports/safary_test/real_rna_groups/work
+  genome_build: hg38
+  genome_resources:
+    aliases:
+      ensembl: homo_sapiens_merged_vep_89_GRCh38
+      human: true
+      snpeff: GRCh38.86
+    rnaseq:
+      dexseq: /ngs/reference_data/genomes/Hsapiens/hg38/rnaseq/ref-transcripts.dexseq.gff3
+      gene_bed: /ngs/reference_data/genomes/Hsapiens/hg38/rnaseq/ref-transcripts.bed
+      rRNA_fa: ../rnaseq/rRNA.fa
+      refflat: /ngs/reference_data/genomes/Hsapiens/hg38/rnaseq/ref-transcripts.refFlat
+      transcriptome_index:
+        tophat: /ngs/reference_data/genomes/Hsapiens/hg38/rnaseq/tophat/hg38_transcriptome.ver
+      transcripts: /ngs/reference_data/genomes/Hsapiens/hg38/rnaseq/ref-transcripts.gtf
+      transcripts_mask: /ngs/reference_data/genomes/Hsapiens/hg38/rnaseq/ref-transcripts-mask.gtf
+    variation:
+      cosmic: null
+      dbnsfp: ../variation/dbNSFP.txt.gz
+      dbscsnv: ../variation/dbscSNV.txt.gz
+      dbsnp: /ngs/reference_data/genomes/Hsapiens/hg38/variation/dbsnp-150.vcf.gz
+      genesplicer: /ngs/reference_data/genomes/Hsapiens/hg38/variation/genesplicer
+      lcr: /ngs/reference_data/genomes/Hsapiens/hg38/coverage/problem_regions/repeats/LCR.bed.gz
+      qsignature: /ngs/reference_data/genomes/Hsapiens/hg38/variation/qsignature.txt
+      sv_repeat: /ngs/reference_data/genomes/Hsapiens/hg38/coverage/problem_regions/repeats/sv_repeat_telomere_centromere.bed
+      train_1000g: /ngs/reference_data/genomes/Hsapiens/hg38/variation/1000G_phase1.snps.high_confidence.vcf.gz
+      train_hapmap: /ngs/reference_data/genomes/Hsapiens/hg38/variation/hapmap_3.3.vcf.gz
+      train_indels: /ngs/reference_data/genomes/Hsapiens/hg38/variation/Mills_and_1000G_gold_standard.indels.vcf.gz
+      train_omni: /ngs/reference_data/genomes/Hsapiens/hg38/variation/1000G_omni2.5.vcf.gz
+    version: 19
+  metadata:
+    batch: null
+    phenotype: ''
+  sam_ref: /ngs/reference_data/genomes/Hsapiens/hg38/seq/hg38.fa
+  summary:
+    metrics:
+      '%GC': '51'
+      5'-3' bias: 0.18
+      Average_insert_size: 0.0
+      Average_read_length: 75.0
+      Duplicates: 0.0
+      Duplication Rate of Mapped: 0.31109493858966936
+      Exonic Rate: 0.3177
+      Intergenic Rate: 0.4228
+      Intronic Rate: 0.2594
+      Mapped_paired_reads: 0.0
+      Mapped_reads: 5237680.0
+      Name: 10_S10
+      Quality format: standard
+      Sequence length: 35-76
+      Sequences flagged as poor quality: '0'
+      Total_reads: 5376765.0
+      rRNA: '54481.515759'
+      rRNA_rate: '0.0154959903702'
+- description: 12_S12
+  dirs:
+    config: /apps/bcbio-nextgen/1.0.6/rhel6-x64/galaxy
+    fastq: null
+    flowcell: null
+    galaxy: /apps/bcbio-nextgen/1.0.6/rhel6-x64/galaxy
+    work: /ngs/reports/safary_test/real_rna_groups/work
+  genome_build: hg38
+  genome_resources:
+    aliases:
+      ensembl: homo_sapiens_merged_vep_89_GRCh38
+      human: true
+      snpeff: GRCh38.86
+    rnaseq:
+      dexseq: /ngs/reference_data/genomes/Hsapiens/hg38/rnaseq/ref-transcripts.dexseq.gff3
+      gene_bed: /ngs/reference_data/genomes/Hsapiens/hg38/rnaseq/ref-transcripts.bed
+      rRNA_fa: ../rnaseq/rRNA.fa
+      refflat: /ngs/reference_data/genomes/Hsapiens/hg38/rnaseq/ref-transcripts.refFlat
+      transcriptome_index:
+        tophat: /ngs/reference_data/genomes/Hsapiens/hg38/rnaseq/tophat/hg38_transcriptome.ver
+      transcripts: /ngs/reference_data/genomes/Hsapiens/hg38/rnaseq/ref-transcripts.gtf
+      transcripts_mask: /ngs/reference_data/genomes/Hsapiens/hg38/rnaseq/ref-transcripts-mask.gtf
+    variation:
+      cosmic: null
+      dbnsfp: ../variation/dbNSFP.txt.gz
+      dbscsnv: ../variation/dbscSNV.txt.gz
+      dbsnp: /ngs/reference_data/genomes/Hsapiens/hg38/variation/dbsnp-150.vcf.gz
+      genesplicer: /ngs/reference_data/genomes/Hsapiens/hg38/variation/genesplicer
+      lcr: /ngs/reference_data/genomes/Hsapiens/hg38/coverage/problem_regions/repeats/LCR.bed.gz
+      qsignature: /ngs/reference_data/genomes/Hsapiens/hg38/variation/qsignature.txt
+      sv_repeat: /ngs/reference_data/genomes/Hsapiens/hg38/coverage/problem_regions/repeats/sv_repeat_telomere_centromere.bed
+      train_1000g: /ngs/reference_data/genomes/Hsapiens/hg38/variation/1000G_phase1.snps.high_confidence.vcf.gz
+      train_hapmap: /ngs/reference_data/genomes/Hsapiens/hg38/variation/hapmap_3.3.vcf.gz
+      train_indels: /ngs/reference_data/genomes/Hsapiens/hg38/variation/Mills_and_1000G_gold_standard.indels.vcf.gz
+      train_omni: /ngs/reference_data/genomes/Hsapiens/hg38/variation/1000G_omni2.5.vcf.gz
+    version: 19
+  metadata:
+    batch: null
+    phenotype: ''
+  sam_ref: /ngs/reference_data/genomes/Hsapiens/hg38/seq/hg38.fa
+  summary:
+    metrics:
+      '%GC': '51'
+      5'-3' bias: 0.19
+      Average_insert_size: 0.0
+      Average_read_length: 75.0
+      Duplicates: 0.0
+      Duplication Rate of Mapped: 0.3199563788349712
+      Exonic Rate: 0.33509999999999995
+      Intergenic Rate: 0.406
+      Intronic Rate: 0.2589
+      Mapped_paired_reads: 0.0
+      Mapped_reads: 5276349.0
+      Name: 12_S12
+      Quality format: standard
+      Sequence length: 35-76
+      Sequences flagged as poor quality: '0'
+      Total_reads: 5398368.0
+      rRNA: '59661.188205'
+      rRNA_rate: '0.0166650572346'

@@ -1,0 +1,49 @@
+details:
+- algorithm:
+    aligner: star
+    quality_format: Standard
+    strandedness: secondstrand
+    trim_reads: false
+  analysis: RNA-seq
+  description: 10_S10
+  files:
+  - /ngs/CVMD/analysis/CVMD_UCPBAT/Fastq/10_S10_R1_001.fastq.gz
+  genome_build: hg38
+  metadata: {}
+- algorithm:
+    aligner: star
+    quality_format: Standard
+    strandedness: secondstrand
+    trim_reads: false
+  analysis: RNA-seq
+  description: 11_S11
+  files:
+  - /ngs/CVMD/analysis/CVMD_UCPBAT/Fastq/11_S11_R1_001.fastq.gz
+  genome_build: hg38
+  metadata: {}
+- algorithm:
+    aligner: star
+    quality_format: Standard
+    strandedness: secondstrand
+    trim_reads: false
+  analysis: RNA-seq
+  description: 12_S12
+  files:
+  - /ngs/CVMD/analysis/CVMD_UCPBAT/Fastq/12_S12_R1_001.fastq.gz
+  genome_build: hg38
+  metadata: {}
+- algorithm:
+    aligner: star
+    quality_format: Standard
+    strandedness: secondstrand
+    trim_reads: false
+  analysis: RNA-seq
+  description: 13_S13
+  files:
+  - /ngs/CVMD/analysis/CVMD_UCPBAT/Fastq/13_S13_R1_001.fastq.gz
+  genome_build: hg38
+  metadata: {}
+fc_date: '2018-02-11'
+fc_name: bcbio_rnaseq
+upload:
+  dir: ../final
