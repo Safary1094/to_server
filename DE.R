@@ -111,83 +111,10 @@ gene_names = res@rownames
 # is_key = raw_dataset$is_key
 
 # make dataframe
-data = data.frame(p, lfc, baseMean, gene_names, HUGO, is_key)
+data = data.frame(p, lfc, baseMean, gene_names)
+#, HUGO, is_key)
 
 
 print('Writing DE result')
-print(DEout_path)
+print(file.path(outputDir, 'RNA_DE.csv'))
 write.csv(data, file.path(outputDir, 'RNA_DE.csv'))
-
-# HeatMap
-
-results <- as.data.frame(res)
-results = cbind(results, data$HUGO)
-results = cbind(results, data$is_key)
-
-counts <- assay(rld)
-alpha <- metadata(res)[["alpha"]]
-lfc = 0
-title = TRUE
-
-results <- results %>%
-  as.data.frame() %>%
-  camel(strict = FALSE) %>%
-  # Keep genes that pass alpha cutoff
-  .[!is.na(.[["padj"]]), , drop = FALSE] %>%
-  .[.[["padj"]] < alpha, , drop = FALSE] %>%
-  # Keep genes that pass log2 fold change cutoff
-  .[!is.na(.[["log2FoldChange"]]), , drop = FALSE] %>%
-  .[.[["log2FoldChange"]] > lfc | .[["log2FoldChange"]] < -lfc, , drop = FALSE] %>%
-  .[.[["dataIsKey"]]== "True", , drop = FALSE]
-
-genes <- rownames(results)
-
-if (!is.null(genes)) {
-  if (!all(genes %in% rownames(counts))) {
-    stop(paste(
-      "Genes missing from counts matrix:",
-      toString(setdiff(genes, rownames(counts)))),
-      call. = FALSE)
-  }
-  counts <- counts %>%
-    .[rownames(.) %in% genes, , drop = FALSE]
-} else {
-  # Remove zero counts
-  counts <- counts %>%
-    .[rowSums(.) > 0, , drop = FALSE]
-}
-
-# Heatmap
-
-scale_rows = function (x) 
-{
-  m = apply(x, 1, mean, na.rm = T)
-  s = apply(x, 1, sd, na.rm = T)
-  return((x - m)/s)
-}
-scale_mat = function (mat, scale) 
-{
-  if (!(scale %in% c("none", "row", "column"))) {
-    stop("scale argument shoud take values: 'none', 'row' or 'column'")
-  }
-  mat = switch(scale, none = mat, row = scale_rows(mat), column = t(scale_rows(t(mat))))
-  return(mat)
-}
-
-counts_sc = scale_mat(counts, "row")
-
-distfunc <- function(x) dist(x,method="euclidean")
-hclustfunc <- function(x) hclust(x, method="ward.D")
-hh<-heatmap.2(as.matrix(counts_sc),dendrogram="row",
-              trace="none", margin=c(8,9), 
-              hclust=hclustfunc,distfun=distfunc)
-
-data_sorted <- counts_sc[match(rev(labels(hh$rowDendrogram)), rownames(counts_sc)), ]
-aux_sorted <- results[match(rev(labels(hh$rowDendrogram)), rownames(counts_sc)), ]
-
-data_heatmap = cbind(as.data.frame(data_sorted), aux_sorted$dataHUGO)
-
-
-print('Writing HM result')
-print(HMout_path)
-write.csv(data_heatmap, file.path(outputDir, 'RNA_HM.csv'))
