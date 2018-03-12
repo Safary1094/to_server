@@ -215,20 +215,20 @@ def gene_tpm_html(proj, key_gene_names):
     proj.counts_names.append(html_path)
 
 
-def run_DE(proj, de_out, hm_out):
-    pathRScript = which('Rscript')
-    pathDE_R = dirname(__file__) + '/DE.R'
-    comp_file_for_reuse = proj.date_dir + '/combined.counts'
-    if not can_reuse(de_out, comp_file_for_reuse):
-        cmd = ' '.join([pathRScript, pathDE_R, proj.final_dir, de_out, hm_out])
-        print('Running:')
-        print(cmd)
-        # os.system(cmd)
+# def run_DE(proj, de_out, hm_out):
+#     pathRScript = which('Rscript')
+#     pathDE_R = dirname(__file__) + '/DE.R'
+#     comp_file_for_reuse = proj.date_dir + '/combined.counts'
+#     if not can_reuse(de_out, comp_file_for_reuse):
+#         cmd = ' '.join([pathRScript, pathDE_R, proj.final_dir, de_out, hm_out])
+#         print('Running:')
+#         print(cmd)
+#         # os.system(cmd)
 
 
 def run_QC(proj, out_file):
     pathRScript = which('Rscript')
-    pathQC_R = dirname(__file__) + '/QC.R'
+    pathQC_R = dirname(__file__) + '/DE.R'
     comp_file_for_reuse = proj.date_dir + '/combined.counts'
     if not can_reuse(out_file, comp_file_for_reuse):
         cmd = ' '.join([pathRScript, pathQC_R, proj.final_dir, out_file])
@@ -239,7 +239,8 @@ def run_QC(proj, out_file):
     # prepare file-links
 
     fnames = ['rawCounts.csv', 'normalizedCounts.csv', 'rlog.csv', 'vst.csv', \
-              'gene.est.csv', 'gene.final.csv', 'gene.fitted.csv', 'corMatrix.csv', 'pca.csv']
+              'gene.est.csv', 'gene.final.csv', 'gene.fitted.csv', 'corMatrix.csv', 'pca.csv', \
+              'RNA_DE.csv', 'RNA_HM.csv']
     fnames = [join(out_file, f) for f in fnames]
 
     fnames.append(join(proj.date_dir, 'combined.counts'))
@@ -296,6 +297,8 @@ def prepare_project_summary(proj):
     if not isfile(path):
         copyfile(join(proj.log_dir, 'project-summary.yaml'), path)
 
+    #gr = pd.read_table(join(proj.date_dir, 'sample_group'), index_col=0)
+
     stream = open(path, 'r')
     data = yaml.load(stream)
 
@@ -303,7 +306,9 @@ def prepare_project_summary(proj):
     gr_id = 1
     for s in data['samples']:
         gr_id *= -1
+        #s_name = s['summary']['metrics']['Name']
         s['metadata']['group'] = 'g' + str(gr_id)
+        #s['metadata']['group'] = gr.at[s_name, 'condition']
 
     stream2 = open(path, 'w')
     yaml.dump(data, stream2)
@@ -312,9 +317,10 @@ def run_analysis(proj, key_gene_names):
     info('*' * 70)
     info('running RNA analysis')
 
-    # expression levels
+    # # expression levels
     # calculate_expression_levels(proj)
-    #
+    # safe_mkdir(join(proj.expression_dir, 'html'))
+    # #
     # isoform_level_html(proj, key_gene_names)
     # exon_level_html(proj, key_gene_names)
     # gene_counts_html(proj, key_gene_names)
@@ -327,28 +333,28 @@ def run_analysis(proj, key_gene_names):
     if not isfile(join(proj.date_dir, 'combined.counts')):
         copyfile(join(proj.expression_dir, 'combined.counts'), join(proj.date_dir, 'combined.counts'))
 
-    qc_out_dir = safe_mkdir(proj.work_dir + '/RNA_QC')
-    qc_out_files = run_QC(proj, qc_out_dir)
+    out_dir = safe_mkdir(proj.work_dir + '/RNAanalysis')
+    qc_out_files = run_QC(proj, out_dir)
 
     rna_files_list.extend(qc_out_files)
-    #
+
     # safe_mkdir(proj.dir + '/work/postproc')
     # de_out = proj.work_dir + '/RNA_DE.csv'
     # hm_out = proj.work_dir + '/RNA_HM.csv'
     # run_DE(proj, de_out, hm_out)
     # rna_files_list.extend([de_out, hm_out])
-    #
+
     # full_table_html_path = proj.expression_dir + '/html/diff_exp.html'
     # diff_exp_genes_html(de_out, proj, key_gene_names)
     # proj.full_expression_dir = full_table_html_path
-    #
 
-    #
+
+
     # fa_in = de_out
     # fa_out = proj.work_dir + '/'
     # fa_file = run_FA(fa_in, fa_out)
     # rna_files_list.extend([fa_file])
-    #
+
     for p in rna_files_list:
         proj.postproc_mqc_files.append(p)
 
