@@ -1,0 +1,48 @@
+details:
+- algorithm:
+    aligner: star
+    quality_format: Standard
+    strandedness: secondstrand
+    trim_reads: false
+  analysis: RNA-seq
+  description: 5_S5
+  files:
+  - /ngs/CVMD/analysis/CVMD_UCPBAT/Fastq/5_S5_R1_001.fastq.gz
+  genome_build: hg38
+  metadata: {}
+
+- algorithm:
+    aligner: star
+    quality_format: Standard
+    strandedness: secondstrand
+    trim_reads: false
+  analysis: RNA-seq
+  description: 3_S3
+  files:
+  - /ngs/CVMD/analysis/CVMD_UCPBAT/Fastq/3_S3_R1_001.fastq.gz
+  genome_build: hg38
+  metadata: {}
+
+- algorithm:
+    aligner: star
+    quality_format: Standard
+    strandedness: secondstrand
+    trim_reads: false
+  analysis: RNA-seq
+  description: 7_S7
+  files:
+  - /ngs/CVMD/analysis/CVMD_UCPBAT/Fastq/7_S7_R1_001.fastq.gz
+  genome_build: hg38
+  metadata: {}
+
+- algorithm:
+    aligner: star
+    quality_format: Standard
+    strandedness: secondstrand
+    trim_reads: false
+  analysis: RNA-seq
+  description: 10_S10
+  files:
+  - /ngs/CVMD/analysis/CVMD_UCPBAT/Fastq/10_S10_R1_001.fastq.gz
+  genome_build: hg38
+  metadata: {}
