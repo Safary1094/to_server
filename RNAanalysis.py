@@ -215,33 +215,63 @@ def gene_tpm_html(proj, key_gene_names):
     proj.counts_names.append(html_path)
 
 
-# def run_DE(proj, de_out, hm_out):
-#     pathRScript = which('Rscript')
-#     pathDE_R = dirname(__file__) + '/DE.R'
-#     comp_file_for_reuse = proj.date_dir + '/combined.counts'
-#     if not can_reuse(de_out, comp_file_for_reuse):
-#         cmd = ' '.join([pathRScript, pathDE_R, proj.final_dir, de_out, hm_out])
-#         print('Running:')
-#         print(cmd)
-#         # os.system(cmd)
+def diff_exp_genes_html(out_dir, proj, key_gene_names):
+    de_gene = pd.read_csv(join(out_dir, 'RNA_DE.csv'), index_col=0)
+    id2gene = load_id2name(proj)
+
+    isof_index = de_gene.index.tolist()
+    gene_index = []
+    for i in isof_index:
+        if i in id2gene:
+            gene_index.append(id2gene[i])
+        else:
+            print('Warning! gene id ' + str(i) + ' not found')
+            gene_index.append('NA')
+    se = pd.Series(gene_index)
+    de_gene.insert(0, 'gene', se.values)
+
+    # rewrite annotated isoforms
+    full_link = join(out_dir, 'de_gene_all.csv')
+    de_gene.to_csv(full_link)
+
+    # select key genes
+    de_gene_key = de_gene.loc[de_gene['gene'].isin(key_gene_names)]
+    de_gene_key = de_gene_key.dropna()
+
+    # save csv for key-genes
+    key_link = join(out_dir, 'de_gene_key.csv')
+    de_gene_key.to_csv(key_link)
+
+    # save html for key-genes
+    gradient_cols = ['p','lfc', 'baseMean']
+    title = '<h3>DE genes</h3>Showing only key genes. \
+    The full results can be downloaded from here: \
+    <a href="'+ full_link + '">de_genes.csv</a>'
+
+    html_path = join(proj.expression_dir, 'html', 'de_genes.html')
+    table_to_html(de_gene_key, gradient_cols, title, html_path)
+    proj.counts_names.append(html_path)
 
 
-def run_QC(proj, out_file):
+def run_bcbioRNASeq(proj, key_gene_names):
+    out_dir = safe_mkdir(proj.work_dir + '/RNAanalysis')
     pathRScript = which('Rscript')
     pathQC_R = dirname(__file__) + '/DE.R'
     comp_file_for_reuse = proj.date_dir + '/combined.counts'
-    if not can_reuse(out_file, comp_file_for_reuse):
-        cmd = ' '.join([pathRScript, pathQC_R, proj.final_dir, out_file])
+    if not can_reuse(out_dir, comp_file_for_reuse):
+        cmd = ' '.join([pathRScript, pathQC_R, proj.final_dir, out_dir])
         print('Running:')
         print(cmd)
         os.system(cmd)
+
+    diff_exp_genes_html(out_dir, proj, key_gene_names)
 
     # prepare file-links
 
     fnames = ['rawCounts.csv', 'normalizedCounts.csv', 'rlog.csv', 'vst.csv', \
               'gene.est.csv', 'gene.final.csv', 'gene.fitted.csv', 'corMatrix.csv', 'pca.csv', \
-              'RNA_DE.csv', 'RNA_HM.csv']
-    fnames = [join(out_file, f) for f in fnames]
+              'de_gene_key.csv']
+    fnames = [join(out_dir, f) for f in fnames]
 
     fnames.append(join(proj.date_dir, 'combined.counts'))
 
@@ -260,34 +290,7 @@ def run_FA(fa_in, fa_out):
     return join(fa_out, 'RNA_PW.csv')
 
 
-def diff_exp_genes_html(de_out, proj, key_gene_names):
-    de_gene = pd.read_csv(de_out, index_col=0)
 
-    # add gene names
-    id2gene = load_id2name(proj)
-    de_gene['gene'] = 'NA'
-    for i in de_gene.index.tolist():
-        if i in id2gene:
-            de_gene.at[i, 'gene'] = id2gene[i]
-        else:
-            print('Warning! gene index ' + str(i) + ' not found')
-
-    # rewrite annotated isoforms
-    full_link = join(proj.expression_dir, 'de_gene.csv')
-    de_gene.to_csv(full_link)
-
-    # select key genes
-    de_gene_key = de_gene.loc[de_gene['gene'].isin(key_gene_names)]
-
-    # save html for key-genes
-    gradient_cols = [sam.name for sam in proj.samples]
-    title = '<h3>DE genes</h3>Showing only key genes. \
-    The full results can be downloaded from here: \
-    <a href="'+ full_link + '">de_genes.csv</a>'
-
-    html_path = join(proj.expression_dir, 'html', 'de_genes.html')
-    table_to_html(de_gene_key, gradient_cols, title, html_path)
-    proj.counts_names.append(html_path)
 
 
 def prepare_project_summary(proj):
@@ -317,10 +320,10 @@ def run_analysis(proj, key_gene_names):
     info('*' * 70)
     info('running RNA analysis')
 
-    # # expression levels
+    # expression levels
     # calculate_expression_levels(proj)
     # safe_mkdir(join(proj.expression_dir, 'html'))
-    # #
+    #
     # isoform_level_html(proj, key_gene_names)
     # exon_level_html(proj, key_gene_names)
     # gene_counts_html(proj, key_gene_names)
@@ -328,26 +331,13 @@ def run_analysis(proj, key_gene_names):
 
     # DE analysis
     rna_files_list = []
-
     prepare_project_summary(proj)
     if not isfile(join(proj.date_dir, 'combined.counts')):
         copyfile(join(proj.expression_dir, 'combined.counts'), join(proj.date_dir, 'combined.counts'))
 
-    out_dir = safe_mkdir(proj.work_dir + '/RNAanalysis')
-    qc_out_files = run_QC(proj, out_dir)
 
-    rna_files_list.extend(qc_out_files)
-
-    # safe_mkdir(proj.dir + '/work/postproc')
-    # de_out = proj.work_dir + '/RNA_DE.csv'
-    # hm_out = proj.work_dir + '/RNA_HM.csv'
-    # run_DE(proj, de_out, hm_out)
-    # rna_files_list.extend([de_out, hm_out])
-
-    # full_table_html_path = proj.expression_dir + '/html/diff_exp.html'
-    # diff_exp_genes_html(de_out, proj, key_gene_names)
-    # proj.full_expression_dir = full_table_html_path
-
+    bcbioRNASeq_out_files = run_bcbioRNASeq(proj, key_gene_names)
+    rna_files_list.extend(bcbioRNASeq_out_files)
 
 
     # fa_in = de_out

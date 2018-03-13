@@ -30,16 +30,13 @@ class MultiqcModule(BaseMultiqcModule):
         for f in self.find_log_files(mod_name, filecontents=False):
             print(f)
             dirpath, fname = f['root'], f['fn']
-            if f['s_name'] == 'RNA_DE':
+            if f['s_name'] == 'de_gene_key':
                 de_path = join(dirpath, fname)
             if f['s_name'] == 'RNA_HM':
                 hm_path = join(dirpath, fname)
 
-        data_parsed = pd.read_csv(de_path)
-        data_parsed = data_parsed.dropna()
-
-        key_genes_ind = data_parsed['is_key'] == True
-        data_key = data_parsed[key_genes_ind]
+        data = pd.read_csv(de_path)
+        print(data.head())
 
         def addVolcanoPlot(data_key):
 
@@ -56,7 +53,7 @@ class MultiqcModule(BaseMultiqcModule):
                 else:
                     point['color'] = '#1f78b4'
 
-                data[d[1]['HUGO']] = point
+                data[d[1]['gene']] = point
 
             config = {
                 'xlab': 'log2 FoldChange',
@@ -87,7 +84,7 @@ class MultiqcModule(BaseMultiqcModule):
                 else:
                     point['color'] = '#b2df8a'
 
-                data[d[1]['HUGO']] = point
+                data[d[1]['gene']] = point
 
             config = {
                 'xLog': True,
@@ -106,12 +103,14 @@ class MultiqcModule(BaseMultiqcModule):
 
         def addTopGenes(data_key):
 
-            data_key = data_key.drop(columns=['Unnamed: 0', 'baseMean', 'gene_names', 'is_key'])
+            print(data_key.head())
+
+            data_key = data_key.drop(columns=['gene_id'])
 
             data_key.sort_values(by='p', inplace=True, ascending=False)
             data_key['lfc'] = abs(data_key['lfc'])
             part = data_key[0:20]
-            part = part.set_index('HUGO')
+            part = part.set_index('gene')
 
             headers = OrderedDict()
             headers['p'] = {'title': 'log10 p-value adjusted'}
@@ -154,9 +153,9 @@ class MultiqcModule(BaseMultiqcModule):
                 description='This plot shows counts of differentially expressed genes on a per-sample basis. We have scaled the data by row'
             )
 
-        addVolcanoPlot(data_key)
-        addBaseMeanPlot(data_key)
-        addTopGenes(data_key)
+        addVolcanoPlot(data)
+        addBaseMeanPlot(data)
+        addTopGenes(data)
 
         # HM_data = pd.read_csv(hm_path)
         # addHeatMap(HM_data)

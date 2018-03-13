@@ -276,26 +276,26 @@ def make_multiqc_report(proj, az_multiqc_config, additional_files, multiqc_fpath
     bcbio_list_files_final = find_multiqc_file_list(proj)
     postproc_list_file = join(work_dir or join(proj.date_dir, 'log'), 'multiqc_list_files.txt')
     qc_files_not_found = []
-    if not can_reuse(postproc_list_file, bcbio_list_files_final):
-        with file_transaction(None, postproc_list_file) as tx:
-            try:
-                with open(bcbio_list_files_final) as inp, open(tx, 'w') as out:
-                    for l in inp:
-                        fpath = join(proj.final_dir, l.strip()).replace(multiqc_bcbio_dir, new_multiqc_bcbio_dir)
-                        if not verify_file(fpath):
-                            qc_files_not_found.append(fpath)
-                            continue
-                        out.write(fpath + '\n')
 
-                    if qc_files_not_found:
-                        warn('-')
-                        warn('Some QC files from list ' + bcbio_list_files_final + ' were not found:' +
-                            ''.join('\n  ' + fpath for fpath in qc_files_not_found))
-                    for fp in additional_files:
-                        if fp:
-                            out.write(fp + '\n')
-            except OSError as e:
-                err(e)
+    with file_transaction(None, postproc_list_file) as tx:
+        try:
+            with open(bcbio_list_files_final) as inp, open(tx, 'w') as out:
+                for l in inp:
+                    fpath = join(proj.final_dir, l.strip()).replace(multiqc_bcbio_dir, new_multiqc_bcbio_dir)
+                    if not verify_file(fpath):
+                        qc_files_not_found.append(fpath)
+                        continue
+                    out.write(fpath + '\n')
+
+                if qc_files_not_found:
+                    warn('-')
+                    warn('Some QC files from list ' + bcbio_list_files_final + ' were not found:' +
+                        ''.join('\n  ' + fpath for fpath in qc_files_not_found))
+                for fp in additional_files:
+                    if fp:
+                        out.write(fp + '\n')
+        except OSError as e:
+            err(e)
 
 
 
