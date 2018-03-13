@@ -106,15 +106,15 @@ res <- resShrunken
 p =-log10(res@listData[["padj"]])
 lfc = res@listData[["log2FoldChange"]]
 baseMean = round(res@listData[["baseMean"]])
-gene_names = res@rownames
+gene_id = res@rownames
 # HUGO = raw_dataset$HUGO
 # is_key = raw_dataset$is_key
 
 # make dataframe
-data = data.frame(p, lfc, baseMean, gene_names)
+data = data.frame(gene_id, p, lfc, baseMean)
 #, HUGO, is_key)
 
 
 print('Writing DE result')
 print(file.path(outputDir, 'RNA_DE.csv'))
-write.csv(data, file.path(outputDir, 'RNA_DE.csv'))
+write.csv(data, file.path(outputDir, 'RNA_DE.csv'), row.names=FALSE)
