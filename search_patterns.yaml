@@ -382,7 +382,7 @@ vcftools/tstv_by_qual:
 vcftools/tstv_summary:
     fn: '*.TsTv.summary'
 RNAseqDE:
-    - fn: 'RNA_DE.csv'
+    - fn: 'de_gene_key.csv'
     - fn: 'RNA_HM.csv'
 RNAseqFA:
     - fn: 'RNA_PW.csv'
@@ -397,3 +397,4 @@ RNAseqQC:
     - fn: 'rlog.csv'
     - fn: 'tpm.csv'
     - fn: 'vst.csv'
+    - fn: 'pca.csv'
