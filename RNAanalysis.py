@@ -278,16 +278,26 @@ def run_bcbioRNASeq(proj, key_gene_names):
     return fnames
 
 
-def run_FA(fa_in, fa_out):
+def run_FA(fa_in, proj_folder):
     pathRScript = which('Rscript')
-    pathFA_R = dirname(__file__) + '/FA.R'
-    if not can_reuse(fa_out, fa_in):
-        cmd = ' '.join([pathRScript, pathFA_R, fa_in, fa_out])
-        print('Running:')
-        print(cmd)
-        os.system(cmd)
+    pathFA_R1 = dirname(__file__) + '/FA1.R'
 
-    return join(fa_out, 'RNA_PW.csv')
+    cmd = ' '.join([pathRScript, pathFA_R1, fa_in, proj_folder])
+    print('Running:')
+    print(cmd)
+    os.system(cmd)
+
+    pathRScript = which('Rscript')
+    g_obj = join(proj_folder, 'genes_obj.csv')
+    pw = join(proj_folder, 'RNA_PW.csv')
+    pathFA_R2 = dirname(__file__) + '/FA2.R'
+
+    cmd = ' '.join([pathRScript, pathFA_R2, g_obj, pw, proj_folder])
+    print('Running:')
+    print(cmd)
+    os.system(cmd)
+
+    return join(proj_folder, 'RNA_PW.csv')
 
 
 def prepare_project_summary(proj):
@@ -305,7 +315,7 @@ def prepare_project_summary(proj):
     # stupid group assignment
     gr_id = 1
     for s in data['samples']:
-        if 'group' not in s['metadata']
+        if 'group' not in s['metadata']:
             gr_id *= -1
             #s_name = s['summary']['metrics']['Name']
             s['metadata']['group'] = 'g' + str(gr_id)
