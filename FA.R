@@ -14,33 +14,27 @@ if (length(args) == 2) {
   proj_folder = args[2]
 } else {
   print('Warning! No input parameters. Using defaults')
-  input_path = '~/ngs/NGS_Reporting_TestData/data/bcbio_postproc/Dev_0406/work/postproc/RNA_DE.csv'
-  proj_folder='/home/alexey/ngs/NGS_Reporting_TestData/data/bcbio_postproc/Dev_0406/work/postproc/'
+  input_path = '/home/alexey/ngs/NGS_Reporting_TestData/data/bcbio_postproc/Dev_0406/work/postproc/RNAanalysis/de_gene_key.csv'
+  proj_folder='/home/alexey/ngs/NGS_Reporting_TestData/data/bcbio_postproc/Dev_0406/work/postproc/RNAanalysis'
 }
 
-raw_dataset = read.csv(file=input_path, header=TRUE)
+data = read.csv(input_path)
 
-key_data = raw_dataset[raw_dataset$is_key == 'True',]
-
-genes_obj = key_data[, 3]
-names(genes_obj) = as.character(key_data[,6])
-genes_obj = sort(genes_obj, decreasing = TRUE)
-
-converted_names = bitr(as.character(key_data[,5]), fromType = "ENSEMBL", toType="ENTREZID", OrgDb="org.Hs.eg.db")
+converted_names = bitr(as.character(data$gene_id), fromType = "ENSEMBL", toType="ENTREZID", OrgDb="org.Hs.eg.db")
 converted_names = converted_names[!duplicated(converted_names$ENSEMBL), ]
-filter_key_data = key_data[is.element(key_data$gene_names,converted_names$ENSEMBL),]
+data = data[is.element(data$gene_id, converted_names$ENSEMBL),]
 
-filter_key_data["ENTREZid"] = converted_names$ENTREZID
+data["ENTREZid"] = converted_names$ENTREZID
 
-genes_obj = filter_key_data[, 3]
-names(genes_obj) = as.character(filter_key_data$ENTREZid)
+genes_obj = data$p
+names(genes_obj) = as.character(data$ENTREZid)
 genes_obj = sort(genes_obj, decreasing = TRUE)
 
 gseaKEGG <- gseKEGG(
   geneList = genes_obj,
   organism = tolower("hsa"),
   nPerm = 1000,
-  minGSSize = 40,
+  minGSSize = 20,
   pvalueCutoff = 0.40,
   verbose = FALSE)
 
@@ -62,13 +56,12 @@ for (pw_id in pathways)
              species    = "hsa",
              limit = list(gene = ceiling(max(abs(genes_obj))), cpd = 1))
   
-  
-  file.rename(paste(pw_id, '.xml', sep=''), paste(proj_folder, pw_id, '.xml', sep=''))
+  file.rename(paste(pw_id, '.xml', sep=''), paste(proj_folder, '/', pw_id, '.xml', sep=''))
   
   gene=a$plot.data.gene
   comp=a$plot.data.cpd
   
-  out_path = paste(proj_folder, pw_id,'_pathway.csv', sep='')
+  out_path = paste(proj_folder, '/', pw_id,'_pathway.csv', sep='')
   print(out_path)
   write.csv(rbind(gene, comp), out_path)
   
