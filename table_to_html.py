@@ -1,7 +1,11 @@
-import pandas as pd
-import numpy as np
+import os
 from math import floor
+from os.path import join
+
+import pandas as pd
+
 from ngs_utils.utils import mean
+from ngs_reporting.rnaseq.style.style_css import table_css_string, page_css_string
 
 # Color heat map
 BLUE_HUE = 240
@@ -45,20 +49,32 @@ def set_cell_colors(row):
     if row.ndim > 1:
         return ''
 
+    #row = data[2:]
+
     row_min, row_max, row_med, is_all_values_equal, low_outer_fence, low_inner_fence, top_outer_fence, top_inner_fence = calc_row_stats(row)
 
     # Color heatmap
     bg_color_attr  = []
+    #txt_color_attr = []
     for i, r in enumerate(row):
+        #if i < 2:
+        #    txt_color_attr.append('')
+        #    bg_color_attr.append('')
+        #    continue
+
+        #text_color = 'black'
         color = 'white'
         if r is not None:
             [top_hue, inner_top_brt, outer_top_brt] = [BLUE_HUE, BLUE_INNER_BRT, BLUE_OUTER_BRT]
             [low_hue, inner_low_brt, outer_low_brt] = [RED_HUE, RED_INNER_BRT, RED_OUTER_BRT]
 
             if not is_all_values_equal:
+                #text_color = 'black'
+
                 # Low outliers
                 if r < low_outer_fence and r < row_med:
                     color = get_color(low_hue, outer_low_brt)
+                    #text_color = 'white'
 
                 elif r < low_inner_fence and r < row_med:
                     color = get_color(low_hue, inner_low_brt)
@@ -79,12 +95,14 @@ def set_cell_colors(row):
 
                 elif r > top_outer_fence and r > row_med:
                     color = get_color(top_hue, outer_top_brt)
+                    #text_color = 'white'
 
                 elif r > row_med:
                     k = float(MEDIAN_BRT - MIN_NORMAL_BRT) / (top_inner_fence - row_med)
                     brt = round(MEDIAN_BRT - (r - row_med) * k)
                     color = get_color(top_hue, brt)
-                    
+
+        #txt_color_attr.append('color: {}'.format(text_color))
         bg_color_attr.append('background-color: {}'.format(color))
 
     return bg_color_attr
@@ -113,9 +131,9 @@ def hsl2rgb(h, s, l):
 
     return map(int, [round(r * 255), round(g * 255), round(b * 255)])
 
+
 def get_color(hue, lightness):
     lightness = lightness or 92
-    # lightness = Math.round (Math.pow hue - 75, 2) / 350 + 35
     rgb = hsl2rgb(float(hue) / 360, 0.8, float(lightness) / 100)
     hex_rgb = [hex(c)[2:] for c in rgb]
     return '#' + ''.join(hex_rgb)
@@ -123,51 +141,57 @@ def get_color(hue, lightness):
 
 def table_to_html(table, gradient_cols, title, path):
     table_id = 'Level'
-
+    # gradient_cols = ["ILS38024-PT1-DS1_S1","Karpas299_S4","RT4_S2","RT112_S3"]
     N = len(gradient_cols)
     num_of_cols = len(table.columns)
 
+    str_col_width = "30px"
     max_name = len(max(gradient_cols, key=len))
-    col_height = str(max_name * 10) + "px"
+    str_col_height = str(max_name * 10) + "px"
 
     styles = [
-        dict(selector="", props=[("font", "sans-serif"),
-                                 ("border-spacing", "7px")
-                                 ]),
         dict(selector="td", props=[("padding", "4px")]),
         dict(selector="thead th:first-child", props=[("display", "none")]),
         dict(selector="tbody th:first-child", props=[("display", "none")]),
-        dict(selector="thead th", props=[("height", col_height)]),
-        dict(selector="th:nth-child(n+" + str(num_of_cols - N + 2) + ")", props=[("transform", "rotate(-90deg)"),
-                                                  ("-webkit-transform", "rotate(-90deg)"),
-                                                  ("-moz-transform", "rotate(-90deg)"),
-                                                  ("-o-transform", "rotate(-90deg)"),
-                                                  ("-ms-transform", "rotate(-90deg)"),
-                                                  ("width","100px"),
-                                                    ("-webkit-width","100px"),
-                                                    ("-moz-width","100px"),
-                                                    ("-o-width","100px"),
-                                                    ("-ms-width","100px")
+        dict(selector="thead th", props=[("height", str_col_height)]),
+        dict(selector="th:nth-child(-n+" + str(num_of_cols - N + 1) + ")", props=[
+                                                    ("position", "relative"),
+                                                    ("vertical-align", "bottom"),
+                                                    ("text-align", "left")
                                                   ]),
+        dict(selector="th:nth-child(n+" + str(num_of_cols - N + 2) + ")", props=[("text-align", "center"),
+                                                        ("position", "relative"),
+                                                        ("vertical-align", "bottom"),
+                                                        ("width", str_col_width + " !important"),
+                                                        ("-webkit-width", str_col_width + " !important"),
+                                                        ("-moz-width", str_col_width + " !important"),
+                                                        ("-o-width", str_col_width + " !important"),
+                                                        ("-ms-width", str_col_width + " !important")]),
         dict(selector="tr td:nth-child(n+" + str(num_of_cols - N + 2) + ")", props=[("text-align", "right"),
-                                                        ("width","100px"),
-                                                        ("-webkit-width","100px"),
-                                                        ("-moz-width","100px"),
-                                                        ("-o-width","100px"),
-                                                        ("-ms-width","100px")])
+                                                        ("width", str_col_width + " !important"),
+                                                        ("-webkit-width", str_col_width + " !important"),
+                                                        ("-moz-width", str_col_width + " !important"),
+                                                        ("-o-width", str_col_width + " !important"),
+                                                        ("-ms-width", str_col_width + " !important")])
         ]
 
-    styler = table.round(2).style.set_uuid(table_id).apply(set_cell_colors, subset=gradient_cols, axis=1).set_table_styles(styles)
 
+    styler = table.round(2).style.set_uuid(table_id).apply(set_cell_colors,subset=gradient_cols, axis=1).set_table_styles(styles)
+    html_string = styler.render()
+    for i, r in enumerate(gradient_cols):
+        html_string = html_string.replace("col_heading level0 col" + str(i + num_of_cols - N) + "\" >" + str(r) + "</th>",
+                                          "col_heading level0 col" + str(i + num_of_cols - N) + "\" ><div class=\"verticalTableHeader\" style=\"width:" + str_col_width + "\" >" + str(r) + "</div></th>")
+
+    
     script1 = '<script type="text/javascript" charset="utf8" src=' \
-              '"http://ajax.aspnetcdn.com/ajax/jQuery/jquery-1.8.2.min.js"' \
+              '"' + join(os.path.dirname(os.path.abspath(__file__)), "style/table_0.js") + '"' \
               '></script>'
     script2 = '<script type="text/javascript" charset="utf8" src=' \
-              '"http://ajax.aspnetcdn.com/ajax/jquery.dataTables/1.9.4/jquery.dataTables.min.js"' \
+              '"' + join(os.path.dirname(os.path.abspath(__file__)), "style/table_1.js") + '"' \
               '></script>'
     script3 = '<script> $(function(){$("#T_' + table_id + '").dataTable({"iDisplayLength": 50}); })</script>'
 
     # write combined html code
     with open(path, 'w') as file_out:
-        file_out.write(title + styler.render() + script1 + script2 + script3)
+        file_out.write(title + page_css_string + html_string + script1 + script2 + script3 + table_css_string)
 

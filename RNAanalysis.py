@@ -6,8 +6,6 @@ from ngs_utils.file_utils import which, can_reuse, safe_mkdir, verify_file
 from ngs_reporting.rnaseq.table_to_html import table_to_html
 from os.path import join, dirname, isfile, abspath
 from ngs_utils.logger import debug, info, critical, err
-from ngs_utils.call_process import run
-import numpy as np
 from shutil import copyfile
 import yaml
 
@@ -285,7 +283,7 @@ def run_FA(fa_in, proj_folder):
     cmd = ' '.join([pathRScript, pathFA_R1, fa_in, proj_folder])
     print('Running:')
     print(cmd)
-    os.system(cmd)
+    # os.system(cmd)
 
     pathRScript = which('Rscript')
     g_obj = join(proj_folder, 'genes_obj.csv')
@@ -295,7 +293,7 @@ def run_FA(fa_in, proj_folder):
     cmd = ' '.join([pathRScript, pathFA_R2, g_obj, pw, proj_folder])
     print('Running:')
     print(cmd)
-    os.system(cmd)
+    # os.system(cmd)
 
     return join(proj_folder, 'RNA_PW.csv')
 
@@ -314,9 +312,14 @@ def prepare_project_summary(proj):
 
     # stupid group assignment
     gr_id = 1
+    i=0
     for s in data['samples']:
         if 'group' not in s['metadata']:
-            gr_id *= -1
+            if i < 11:
+                gr_id = -1
+            else:
+                gr_id = 1
+            i+=1
             #s_name = s['summary']['metrics']['Name']
             s['metadata']['group'] = 'g' + str(gr_id)
             #s['metadata']['group'] = gr.at[s_name, 'condition']
@@ -329,23 +332,22 @@ def run_analysis(proj, key_gene_names):
     info('running RNA analysis')
 
     # expression levels
-    # calculate_expression_levels(proj)
-    # safe_mkdir(join(proj.expression_dir, 'html'))
-    #
-    # isoform_level_html(proj, key_gene_names)
-    # exon_level_html(proj, key_gene_names)
-    # gene_counts_html(proj, key_gene_names)
-    # gene_tpm_html(proj, key_gene_names)
+    calculate_expression_levels(proj)
+    safe_mkdir(join(proj.expression_dir, 'html'))
 
-    # DE analysis
+    isoform_level_html(proj, key_gene_names)
+    exon_level_html(proj, key_gene_names)
+    gene_counts_html(proj, key_gene_names)
+    gene_tpm_html(proj, key_gene_names)
+
     rna_files_list = []
     prepare_project_summary(proj)
     # if not isfile(join(proj.date_dir, 'combined.counts')):
     #     copyfile(join(proj.expression_dir, 'combined.counts'), join(proj.date_dir, 'combined.counts'))
 
-
-    # bcbioRNASeq_out_files = run_bcbioRNASeq(proj, key_gene_names)
-    # rna_files_list.extend(bcbioRNASeq_out_files)
+    # QC+DE analysis
+    bcbioRNASeq_out_files = run_bcbioRNASeq(proj, key_gene_names)
+    rna_files_list.extend(bcbioRNASeq_out_files)
 
     # FA analysis
     fa_in = join(proj.work_dir, 'RNAanalysis', 'de_gene_key.csv')
