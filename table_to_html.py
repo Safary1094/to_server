@@ -182,13 +182,13 @@ def table_to_html(table, gradient_cols, title, path):
         html_string = html_string.replace("col_heading level0 col" + str(i + num_of_cols - N) + "\" >" + str(r) + "</th>",
                                           "col_heading level0 col" + str(i + num_of_cols - N) + "\" ><div class=\"verticalTableHeader\" style=\"width:" + str_col_width + "\" >" + str(r) + "</div></th>")
 
-    
-    script1 = '<script type="text/javascript" charset="utf8" src=' \
-              '"' + join(os.path.dirname(os.path.abspath(__file__)), "style/table_0.js") + '"' \
-              '></script>'
-    script2 = '<script type="text/javascript" charset="utf8" src=' \
-              '"' + join(os.path.dirname(os.path.abspath(__file__)), "style/table_1.js") + '"' \
-              '></script>'
+    tbl_file0 = open(join(os.path.dirname(os.path.abspath(__file__)), "style/table_0.js"), 'r')
+    tbl0 = tbl_file0.read()
+    script1 = '<script type="text/javascript" charset="utf8">' + tbl0 + '</script>'
+
+    tbl_file1 = open(join(os.path.dirname(os.path.abspath(__file__)), "style/table_1.js"), 'r')
+    tbl1 = tbl_file1.read()
+    script2 = '<script type="text/javascript" charset="utf8">' + tbl1 + '</script>'
     script3 = '<script> $(function(){$("#T_' + table_id + '").dataTable({"iDisplayLength": 50}); })</script>'
 
     # write combined html code
