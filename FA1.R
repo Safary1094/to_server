@@ -10,15 +10,15 @@ print("FA libraries loaded")
 args = commandArgs(trailingOnly=TRUE)
 
 if (length(args) == 2) {
-  input_path = args[1]
-  proj_folder = args[2]
+  dir_path = args[1]
+  de_genes = args[2]
 } else {
   print('Warning! No input parameters. Using defaults')
-  input_path = '/home/alexey/ngs/NGS_Reporting_TestData/data/bcbio_postproc/Dev_0406/work/postproc/RNAanalysis/de_gene_key.csv'
-  proj_folder='/home/alexey/ngs/NGS_Reporting_TestData/data/bcbio_postproc/Dev_0406/work/postproc/RNAanalysis'
+  de_genes = '/home/alexey/ngs/NGS_Reporting_TestData/data/bcbio_postproc/Dev_0406/work/postproc/RNAanalysis/g1_g2/de_gene_all.csv'
+  dir_path='/home/alexey/ngs/NGS_Reporting_TestData/data/bcbio_postproc/Dev_0406/work/postproc/RNAanalysis/g1_g2'
 }
 
-data = read.csv(input_path)
+data = read.csv(de_genes)
 
 converted_names = bitr(as.character(data$gene_id), fromType = "ENSEMBL", toType="ENTREZID", OrgDb="org.Hs.eg.db")
 converted_names = converted_names[!duplicated(converted_names$ENSEMBL), ]
@@ -34,11 +34,12 @@ gseaKEGG <- gseKEGG(
   geneList = genes_obj,
   organism = tolower("hsa"),
   nPerm = 1000,
-  minGSSize = 20,
-  pvalueCutoff = 0.40,
+  minGSSize = 100,
+  pvalueCutoff = 0.05,
   verbose = FALSE)
 
 gseaKEGGSummary <- slot(gseaKEGG, "result")
+print(gseaKEGGSummary$ID)
 
 pathways <- gseaKEGGSummary$ID
 
@@ -46,5 +47,5 @@ gene_group_ens = strsplit(gseaKEGGSummary$core_enrichment[1], "/")
 
 bitr(as.character(gene_group_ens[[1]]), fromType = "ENTREZID", toType = "ENSEMBL", OrgDb="org.Hs.eg.db")
 
-write.csv(gseaKEGGSummary, paste(proj_folder, '/RNA_PW.csv', sep=''))
-write.csv(as.matrix(genes_obj), paste(proj_folder, '/genes_obj.csv', sep=''))
+write.csv(gseaKEGGSummary, file.path(dir_path, 'pathway_table.csv'), row.names=FALSE)
+write.csv(as.matrix(genes_obj), file.path(dir_path, 'genes_obj.csv'))

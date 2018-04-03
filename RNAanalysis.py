@@ -23,6 +23,23 @@ def load_tx2name(proj):
     tx2gene = tx2gene.to_dict()
     return tx2gene['Gene']
 
+def fix_dots_tx2gene(tx2gene_path):
+    tx2gene = pd.read_csv(tx2gene_path, header=None)
+
+    def remove_dot(s):
+        dot_pos = s[0].find('.')
+        if dot_pos > -1:
+            return s[0:dot_pos]
+        else:
+            return s
+
+    for i in range(len(tx2gene)):
+        tx2gene.at[i, 0] = remove_dot(tx2gene.at[i, 0])
+
+    # tx2gene.apply(remove_dot, axis = 1)
+
+    tx2gene.to_csv(tx2gene_path + '.mod', header=False, index=False)
+
 
 def run_tximport(proj):
     # computes, gene_counts, gene_tpms, isoform tpms from quant.sf
@@ -36,8 +53,10 @@ def run_tximport(proj):
             if isfile(quant_path):
                 cmdl.append(quant_path)
 
+    fix_dots_tx2gene(join(proj.date_dir, 'tx2gene.csv'))
+
     cmdl.append(proj.expression_dir)
-    cmdl.append(join(proj.date_dir, 'tx2gene.csv'))
+    cmdl.append(join(proj.date_dir, 'tx2gene.csv.mod'))
     cmdl = ' '.join(cmdl)
     print(cmdl)
     os.system(cmdl)
@@ -251,51 +270,102 @@ def diff_exp_genes_html(out_dir, proj, key_gene_names):
     proj.counts_names.append(html_path)
 
 
-def run_bcbioRNASeq(proj, key_gene_names):
+def run_QC(proj, key_gene_names):
     out_dir = safe_mkdir(proj.work_dir + '/RNAanalysis')
     pathRScript = which('Rscript')
-    pathQC_R = dirname(__file__) + '/DE.R'
+    pathQC_R = dirname(__file__) + '/QC.R'
     comp_file_for_reuse = proj.date_dir + '/combined.counts'
+
     if not can_reuse(out_dir, comp_file_for_reuse):
         cmd = ' '.join([pathRScript, pathQC_R, proj.final_dir, out_dir])
         print('Running:')
         print(cmd)
-        os.system(cmd)
-
-    diff_exp_genes_html(out_dir, proj, key_gene_names)
-
-    # prepare file-links
+        # os.system(cmd)
 
     fnames = ['rawCounts.csv', 'normalizedCounts.csv', 'rlog.csv', 'vst.csv', \
-              'gene.est.csv', 'gene.final.csv', 'gene.fitted.csv', 'corMatrix.csv', 'pca.csv', \
-              'de_gene_key.csv']
+              'gene.est.csv', 'gene.final.csv', 'gene.fitted.csv', 'corMatrix.csv', 'pca.csv']
     fnames = [join(out_dir, f) for f in fnames]
 
     fnames.append(join(proj.date_dir, 'combined.counts'))
 
     return fnames
 
-
-def run_FA(fa_in, proj_folder):
-    pathRScript = which('Rscript')
-    pathFA_R1 = dirname(__file__) + '/FA1.R'
-
-    cmd = ' '.join([pathRScript, pathFA_R1, fa_in, proj_folder])
-    print('Running:')
-    print(cmd)
-    # os.system(cmd)
+def run_DE(proj, key_gene_names):
 
     pathRScript = which('Rscript')
-    g_obj = join(proj_folder, 'genes_obj.csv')
-    pw = join(proj_folder, 'RNA_PW.csv')
-    pathFA_R2 = dirname(__file__) + '/FA2.R'
+    pathQC_R = dirname(__file__) + '/DE.R'
 
-    cmd = ' '.join([pathRScript, pathFA_R2, g_obj, pw, proj_folder])
-    print('Running:')
-    print(cmd)
-    # os.system(cmd)
+    contrast_path = join(proj.date_dir, 'contrasts.csv')
 
-    return join(proj_folder, 'RNA_PW.csv')
+
+    contrast = pd.read_csv(contrast_path, header=None)
+    contrast = [tuple(x) for x in contrast.to_records(index=False)]
+    fnames_key, fnames_all = [], []
+    for c in contrast:
+        print(c)
+        de_out = safe_mkdir(join(proj.work_dir, 'RNAanalysis', c[0]+'_'+c[1]))
+        cmd = ' '.join([pathRScript, pathQC_R, proj.final_dir, de_out, c[0], c[1]])
+        print('Running:')
+        print(cmd)
+        # os.system(cmd)
+
+        diff_exp_genes_html(de_out, proj, key_gene_names)
+
+        # prepare file-links
+        fnames_key.append(join(de_out, 'de_gene_key.csv'))
+        fnames_all.append(join(de_out, 'de_gene_all.csv'))
+
+    return fnames_key, fnames_all
+
+
+def run_FA(proj, de_files_list):
+
+    pathRScript = which('Rscript')
+    pathFA_R1 = join(dirname(__file__), 'FA1.R')
+    pathFA_R2 = join(dirname(__file__), 'FA2.R')
+
+    fnames = []
+
+    # loop over all contrasts and determine all pathways
+    for de_csv in de_files_list:
+        dir_path = dirname(de_csv)
+        cmd = ' '.join([pathRScript, pathFA_R1, dir_path, de_csv])
+        print('Running:')
+        print(cmd)
+        # os.system(cmd)
+
+
+
+    # summarize pathways
+    pathways = set()
+    for de_csv in de_files_list:
+        pathway_table_path = join(dirname(de_csv), 'pathway_table.csv')
+        d = pd.read_csv(pathway_table_path, index_col=[0])
+        pathways = pathways | set(d.index.tolist())
+
+    # complete each pathway table with missing pathways
+    for de_csv in de_files_list:
+        pathway_table_path = join(dirname(de_csv), 'pathway_table.csv', )
+        d = pd.read_csv(pathway_table_path, index_col=[0])
+
+        for pw in pathways:
+            if pw not in d.index.tolist():
+                d.loc[pw] = 'NA'
+
+        d.to_csv(pathway_table_path)
+
+    for de_csv in de_files_list:
+        dir_path = dirname(de_csv)
+
+        cmd = ' '.join([pathRScript, pathFA_R2, dir_path])
+        print('Running:')
+        print(cmd)
+        # os.system(cmd)
+
+        # write pathways for multiqc
+        fnames.append(join(dir_path, 'pathway_table.csv'))
+
+    return fnames
 
 
 def prepare_project_summary(proj):
@@ -305,24 +375,22 @@ def prepare_project_summary(proj):
     if not isfile(path):
         copyfile(join(proj.log_dir, 'project-summary.yaml'), path)
 
-    #gr = pd.read_table(join(proj.date_dir, 'sample_group'), index_col=0)
-
     stream = open(path, 'r')
     data = yaml.load(stream)
 
-    # stupid group assignment
-    gr_id = 1
-    i=0
-    for s in data['samples']:
-        if 'group' not in s['metadata']:
-            if i < 11:
-                gr_id = -1
-            else:
-                gr_id = 1
-            i+=1
-            #s_name = s['summary']['metrics']['Name']
-            s['metadata']['group'] = 'g' + str(gr_id)
-            #s['metadata']['group'] = gr.at[s_name, 'condition']
+    sample_group_path = join(proj.date_dir, 'sample_group.csv')
+    if isfile(sample_group_path):
+        # good group assignment
+        gr = pd.read_csv(sample_group_path, index_col=0)
+        for s in data['samples']:
+                s_name = s['summary']['metrics']['Name']
+                s['metadata']['group'] = gr.at[s_name, 'condition']
+    else:
+        # stupid group assignment
+        gr_id = 1
+        for s in data['samples']:
+                gr_id *= -1
+                s['metadata']['group'] = 'g' + str(gr_id)
 
     stream2 = open(path, 'w')
     yaml.dump(data, stream2)
@@ -332,28 +400,28 @@ def run_analysis(proj, key_gene_names):
     info('running RNA analysis')
 
     # expression levels
-    calculate_expression_levels(proj)
-    safe_mkdir(join(proj.expression_dir, 'html'))
+    # calculate_expression_levels(proj)
+    # safe_mkdir(join(proj.expression_dir, 'html'))
 
-    isoform_level_html(proj, key_gene_names)
-    exon_level_html(proj, key_gene_names)
-    gene_counts_html(proj, key_gene_names)
-    gene_tpm_html(proj, key_gene_names)
+    # isoform_level_html(proj, key_gene_names)
+    # exon_level_html(proj, key_gene_names)
+    # gene_counts_html(proj, key_gene_names)
+    # gene_tpm_html(proj, key_gene_names)
+
+    prepare_project_summary(proj)
 
     rna_files_list = []
-    prepare_project_summary(proj)
-    # if not isfile(join(proj.date_dir, 'combined.counts')):
-    #     copyfile(join(proj.expression_dir, 'combined.counts'), join(proj.date_dir, 'combined.counts'))
+    qc_files_list = run_QC(proj, key_gene_names)
+    rna_files_list.extend(qc_files_list)
 
-    # QC+DE analysis
-    bcbioRNASeq_out_files = run_bcbioRNASeq(proj, key_gene_names)
-    rna_files_list.extend(bcbioRNASeq_out_files)
+    sample_group_path = join(proj.date_dir, 'sample_group.csv')
+    if isfile(sample_group_path):
 
-    # FA analysis
-    fa_in = join(proj.work_dir, 'RNAanalysis', 'de_gene_key.csv')
-    fa_out = join(proj.work_dir, 'RNAanalysis')
-    fa_file = run_FA(fa_in, fa_out)
-    rna_files_list.extend([fa_file])
+        de_files_key, de_files_all = run_DE(proj, key_gene_names)
+        rna_files_list.extend(de_files_key)
+
+        fa_files_list = run_FA(proj, de_files_all)
+        rna_files_list.extend(fa_files_list)
 
     for p in rna_files_list:
         proj.postproc_mqc_files.append(p)
