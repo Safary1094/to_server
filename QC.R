@@ -2,22 +2,28 @@
 
 library(bcbioRNASeq)
 
-# Load bcbioRNASeq object
+
 args = commandArgs(trailingOnly=TRUE)
 
-project_path = args[1]
-#project_path = '/home/alexey/ngs/NGS_Reporting_TestData/data/bcbio_postproc/Dev_0406/final/'
+if (length(args) > 0) {
+  project_path = args[1]
+  outputDir = args[2]
+} else {
+  print('Warning! No input parameters. Using defaults')
+  real_project_path = '/home/alexey/ngs/NGS_Reporting_TestData/data/bcbio_postproc/Dev_0406/final/'
+  outputDir = '/home/alexey/ngs/NGS_Reporting_TestData/data/bcbio_postproc/Dev_0406/work/postproc/RNAanalysis'
+}
 
+print('Reading project')
+print(project_path)
 bcb = loadRNASeq(project_path)
 
-# Directory paths (has to be inside the project directory)
-outputDir = args[2]
-#outputDir = "/home/alexey/ngs/NGS_Reporting_TestData/data/bcbio_postproc/Dev_0406/work/postproc"
-
+# ------------------------
 if (!dir.exists(outputDir)) dir.create(outputDir)
 dataDir = file.path(outputDir)
 if (!dir.exists(dataDir)) dir.create(dataDir)
 
+# data for Variance stabilization section + several additional files
 sampleMetadata(bcb)
 rawCounts = counts(bcb, normalized = FALSE)
 normalizedCounts = counts(bcb, normalized = TRUE)
@@ -25,11 +31,10 @@ rlog = counts(bcb, normalized = "rlog")
 vst = counts(bcb, normalized = "vst")
 tpm = tpm(bcb)
 
-# data for Variance stabilization section + several additional files
 writeCounts(rawCounts, normalizedCounts, tpm, rlog, vst, dir = dataDir, gzip=FALSE)
 
 
-#######
+# data for PCA and PCA Covariates
 pca=plotPCA(bcb, returnData = T)
 library(DEGreport)
 dds=bcb@bcbio@listData[["DESeqDataSet"]]
@@ -38,11 +43,10 @@ res = degCovariates(log2(counts(dds)+0.5),
 res2=plotPCACovariates(bcb)
 corMatrix=res2$corMatrix
 
-# data for PCA and PCA Covariates
 writeCounts(corMatrix, pca, dir = dataDir, gzip=FALSE)
 
 
-#######
+#data for the Dispersion section
 CV=FALSE
 log = "xy"
 px = mcols(dds)$baseMean
@@ -67,5 +71,5 @@ gene.est = as.data.frame(cbind(px, pmax(py,ymin), gene.names))
 gene.fitted = as.data.frame(cbind(px, py2, gene.names))
 gene.final = as.data.frame(cbind(px, py3, gene.names))
 
-#data for the Dispersion section
+
 writeCounts(gene.est, gene.fitted, gene.final, dir = dataDir, gzip=FALSE)

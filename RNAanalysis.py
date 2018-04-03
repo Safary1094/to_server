@@ -298,22 +298,20 @@ def run_DE(proj, key_gene_names):
     contrast_path = join(proj.date_dir, 'contrasts.csv')
 
 
-    contrast = pd.read_csv(contrast_path, header=None)
-    contrast = [tuple(x) for x in contrast.to_records(index=False)]
-    fnames_key, fnames_all = [], []
-    for c in contrast:
-        print(c)
-        de_out = safe_mkdir(join(proj.work_dir, 'RNAanalysis', c[0]+'_'+c[1]))
-        cmd = ' '.join([pathRScript, pathQC_R, proj.final_dir, de_out, c[0], c[1]])
-        print('Running:')
-        print(cmd)
-        # os.system(cmd)
+    cmd = ' '.join([pathRScript, pathQC_R, proj.final_dir, join(proj.work_dir, 'RNAanalysis'), contrast_path])
+    print('Running:')
+    print(cmd)
+    # os.system(cmd)
 
-        diff_exp_genes_html(de_out, proj, key_gene_names)
+    fnames_key, fnames_all = [],[]
+    contrasts = pd.read_csv(contrast_path, header=None)
+    for ind, c in contrasts.iterrows():
+        contrast_dir_path = join(proj.work_dir, 'RNAanalysis', 'group_' + c[0] +'_vs_'+ c[1])
+        diff_exp_genes_html(contrast_dir_path, proj, key_gene_names)
 
         # prepare file-links
-        fnames_key.append(join(de_out, 'de_gene_key.csv'))
-        fnames_all.append(join(de_out, 'de_gene_all.csv'))
+        fnames_key.append(join(contrast_dir_path, 'de_gene_key.csv'))
+        fnames_all.append(join(contrast_dir_path, 'de_gene_all.csv'))
 
     return fnames_key, fnames_all
 
@@ -332,7 +330,7 @@ def run_FA(proj, de_files_list):
         cmd = ' '.join([pathRScript, pathFA_R1, dir_path, de_csv])
         print('Running:')
         print(cmd)
-        # os.system(cmd)
+        os.system(cmd)
 
 
 
