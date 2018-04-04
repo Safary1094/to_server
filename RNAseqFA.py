@@ -11,21 +11,25 @@ class MultiqcModule(BaseMultiqcModule):
     def pathway_enrichment_heatmap(self, pw):
         data = pd.DataFrame({'A': []})
 
+        contrast_names = []
         for cont in pw:
             data = pd.concat([data, pw[cont]['enrichmentScore']], axis=1)
+            contrast_names.append(cont[6:])
 
-        data.drop(columns=['A'], inplace=True)
-        data.dropna(0, inplace=True)
+        data.drop('A', axis=1, inplace=True)
+        data.fillna(0, inplace=True)
         print(data)
 
         hmdata = data.values.tolist()
-        names = data.index.tolist()
+        pathway_names = data.index.tolist()
 
-        hm_html = heatmap.plot(hmdata, names)
+        print(contrast_names)
+        print(pathway_names)
+        hm_html = heatmap.plot(hmdata, contrast_names, pathway_names)
 
         self.add_section(
-            name='enrich_heatmap',
-            anchor='enrich_heatmap',
+            name='Heatmap of enriched pathways',
+            anchor='Heatmap of enriched pathways',
             content=hm_html,
             description='Shows enrichment score for different contrasts'
         )

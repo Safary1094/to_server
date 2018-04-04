@@ -64,10 +64,15 @@ class MultiqcModule(BaseMultiqcModule):
 
         print(de_num)
 
+        headers = OrderedDict()
+        headers['Sample Name'] = {'title': 'Contrast'}
+        headers['numbef_of_de_genes'] = {'title': 'number of DE genes'}
+
         self.add_section(
-            name='de_num_per_contrast',
-            anchor='de_num_per_contrast',
-            content=table.plot(de_num)
+            name='DEs per contrast',
+            anchor='DEs percontrast',
+
+            content=table.plot(de_num, headers, {'col1_header': 'Contrast'})
         )
 
         return de_num
@@ -94,10 +99,10 @@ class MultiqcModule(BaseMultiqcModule):
         hm_html = heatmap.plot(hmdata, names)
 
         self.add_section(
-            name='de_overlap',
-            anchor='de_overlap',
+            name='DE overlap',
+            anchor='DE overlap',
             content=hm_html,
-            description='Each dot at meanAverage plot copares corresponding gene mean expression across all samples and fold change between tested groups. Dots marked with green corresponds to genes with high evidence in differential expression between tested groups (-log10 p-value greater than 1)'
+            description='Table of numbers of overlapping genes across contrasts'
         )
 
     def addTopGenes(self, de):
@@ -119,7 +124,7 @@ class MultiqcModule(BaseMultiqcModule):
             tab_header_volcano += '<li>' + c + '</li>'
 
             table_config = {'col1_header': 'Gene Name'}
-            mqc_table = table.plot(top.to_dict(orient='index'))#, headers, table_config)
+            mqc_table = table.plot(top.to_dict(orient='index'), headers, table_config)
             tab_content_volcano += '<div>' + mqc_table + '</div>'
 
         tab_header_volcano += '</ul>'
@@ -134,8 +139,8 @@ class MultiqcModule(BaseMultiqcModule):
         script = script_file.read()
 
         self.add_section(
-            name='Top_genes',
-            anchor='Top_genes',
+            name='Top DE genes',
+            anchor='Top DE genes',
             content=style +'\n'+ script+'\n' + html_table+'\n' + '<script> $(document).ready(function(){ $(".tabs").lightTabs(); }); </script>',
         )
 
@@ -214,7 +219,8 @@ class MultiqcModule(BaseMultiqcModule):
         #     )
         #
         # # addVolcanoPlot(data)
-        addBaseMeanPlot(data)
+
+        # addBaseMeanPlot(data)
         # addTopGenes(data)
         #
         # # HM_data = pd.read_csv(hm_path)
