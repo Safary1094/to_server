@@ -58,7 +58,7 @@ class MultiqcModule(BaseMultiqcModule):
         logFold = 2
         for cont in de:
             curr_de = de[cont]
-            num = len(curr_de.loc[(curr_de['p'] > 1) & (curr_de['lfc'] > 2)])
+            num = len(curr_de.loc[(curr_de['p'] > 1) & (abs(curr_de['lfc']) > 0.5)])
             de_num[cont] = {'numbef_of_de_genes': num}
 
 
@@ -79,8 +79,10 @@ class MultiqcModule(BaseMultiqcModule):
         for i in de:
             de_overlap[i] = {}
             for j in de:
-                i_de_genes = set(de[i].index.tolist())
-                j_de_genes = set(de[j].index.tolist())
+                de_i = de[i].loc[(de[i]['p'] > 1) & (abs(de[i]['lfc']) > 0.5)]
+                de_j = de[j].loc[(de[j]['p'] > 1) & (abs(de[j]['lfc']) > 0.5)]
+                i_de_genes = set(de_i.index.tolist())
+                j_de_genes = set(de_j.index.tolist())
 
                 de_overlap[i][j] = len(i_de_genes & j_de_genes)
 
@@ -104,7 +106,7 @@ class MultiqcModule(BaseMultiqcModule):
         tab_content_volcano = '<div>'
 
         for c in de:
-            de[c] = de[c].drop(columns=['gene_id'])
+            de[c] = de[c].drop('gene_id', axis=1)
 
             de[c].sort_values(by='p', inplace=True, ascending=False)
             top = de[c][0:20]
