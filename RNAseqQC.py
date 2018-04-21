@@ -8,6 +8,7 @@ from collections import OrderedDict
 import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
+
 import scipy.stats as st
 from multiqc.plots import scatter, heatmap
 from math import log2, log10
@@ -27,7 +28,6 @@ class MultiqcModule(BaseMultiqcModule):
 
         # Initialise the parent object
         super(MultiqcModule, self).__init__(name='bcbiornaseqqc', anchor=mod_name)
-
         file_names, roots = [], []
         for f in self.find_log_files(mod_name, filecontents=False):
             print(f)
@@ -61,30 +61,41 @@ class MultiqcModule(BaseMultiqcModule):
             '#0000FF', '#008000', '#FFA500', '#FF00FF', '#CCCC00', '#800000',
             '#00CCCC', '#808080', '#800080', '#808000', '#000080', '#008080', '#00FF00',]
 
+        color_by_sam = {}
         for i in pca_data.index.tolist():
             pca_data.at[i, 'color'] = standard_colors[i % len(standard_colors)]
+            color_by_sam[pca_data.at[i, 'name']] = standard_colors[i % len(standard_colors)]
 
         pca_data = pca_data.set_index('rowname')
         pca_data = pca_data[['pc1', 'pc2', 'name', 'color']]
         pca_data = pca_data.rename(columns = {'pc1':'x', 'pc2':'y'})
+
+        # color_by_sam = pd.DataFrame(pca_data['color'])
+        # color_by_sam = color_by_sam.to_dict('index')
+
         pca_data = pca_data.to_dict('index')
-        print(pca_data)
+
+        pconfig = {'colors': color_by_sam}
 
         self.add_section (
             name = 'PCA plot',
             anchor = 'pca',
-            description = 'pca',
+            description = 'PCA is a popular method that is based on the principles of dimensional reduction. Below is a PCA plot of the samples within the space of the first two principal components that explain the most variation in the data. These were calculated using the read counts of the top 1000 most variable genes within the dataset.',
 
-            plot = scatter.plot(pca_data)
+            plot = scatter.plot(pca_data, pconfig)
         )
 
 
     def plot_covariates(self, raw_data):
 
+        # find number of PCs
+        pc_num = raw_data['covar'].value_counts().tolist()
+        pc_num = pc_num[0]
+
         comp_names = []
         for iter, row in raw_data.iterrows():
             comp_names.append(row['compare'])
-            if iter % 3 == 2:
+            if iter % pc_num == 2:
                 break
 
         cor_names = []
@@ -94,8 +105,8 @@ class MultiqcModule(BaseMultiqcModule):
 
         hmdata = [[None for _ in range(len(cor_names))] for _ in range(3)]
         for iter,row in raw_data.iterrows():
-            j = int(iter / 3)
-            i = iter % 3
+            j = int(iter / pc_num)
+            i = iter % pc_num
             if row['fdr'] < 0.1:
                 hmdata[i][j] = row['r']
 

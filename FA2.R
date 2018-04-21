@@ -13,7 +13,7 @@ if (length(args) > 0) {
   dir_path = args[1]
 } else {
   print('Warning! No input parameters. Using defaults')
-  pw_path = '/home/alexey/ngs/NGS_Reporting_TestData/data/bcbio_postproc/Dev_0406/work/postproc/RNAanalysis/RNA_PW.csv'
+  dir_path = '/home/alexey/ngs/NGS_Reporting_TestData/data/bcbio_postproc/Dev_0406/work/postproc/RNAanalysis/group_g1_vs_g2/'
 }
 
 genes_obj_path = file.path(dir_path, 'genes_obj.csv')

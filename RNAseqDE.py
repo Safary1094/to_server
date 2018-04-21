@@ -144,10 +144,35 @@ class MultiqcModule(BaseMultiqcModule):
             content=style +'\n'+ script+'\n' + html_table+'\n' + '<script> $(document).ready(function(){ $(".tabs").lightTabs(); }); </script>',
         )
 
+    def addBaseMeanPlot(self, ata_key):
+        data1 = {
+            'sample 1': {
+                'x': 1,
+                'y': 1
+            }}
+        data2 = {'sample 2': {
+            'x': 2,
+            'y': 3
+        }
+        }
+
+        config = {
+            'data_labels': [
+                {'name': 'rlog', 'ylab': 'rlog'},
+                {'name': 'vst', 'ylab': 'vst'}]}
+
+        html_content = scatter.plot([data1, data2], config)
+
+        self.add_section(
+            name='MeanAverage',
+            anchor='MeanAverage',
+            content=html_content,
+            description='Each dot at meanAverage plot copares corresponding gene mean expression across all samples and fold change between tested groups. Dots marked with green corresponds to genes with high evidence in differential expression between tested groups (-log10 p-value greater than 1)'
+        )
+
     def __init__(self):
         mod_name = 'RNAseqDE'
         super(MultiqcModule, self).__init__(name='RNA Differential Expression', anchor=mod_name)
-
         # make dict of de-tables per contrast
         de = {}
         for f in self.find_log_files(mod_name, filecontents=False):
@@ -159,39 +184,16 @@ class MultiqcModule(BaseMultiqcModule):
                 data = pd.read_csv(de_path)
                 de[contrast[-1]] = data
 
-
-        self.addVolcano(de)
-        self.addNumDE_perContrast(de)
-        self.addDE_overlap(de)
-        self.addTopGenes(de)
-
-
-        def addBaseMeanPlot(data_key):
-            data1 = {
-                'sample 1': {
-                    'x': 1,
-                    'y': 1
-                }}
-            data2 = {'sample 2': {
-                    'x': 2,
-                    'y': 3
-                }
-            }
+        if len(de)==0:
+            print('no DE files')
+        else:
+            self.addVolcano(de)
+            self.addNumDE_perContrast(de)
+            self.addDE_overlap(de)
+            self.addTopGenes(de)
 
 
-            config = {
-                'data_labels': [
-                    {'name': 'rlog', 'ylab': 'rlog'},
-                    {'name': 'vst', 'ylab': 'vst'}]          }
 
-            html_content = scatter.plot([data1, data2], config)
-
-            self.add_section(
-                name='MeanAverage',
-                anchor='MeanAverage',
-                content=html_content,
-                description='Each dot at meanAverage plot copares corresponding gene mean expression across all samples and fold change between tested groups. Dots marked with green corresponds to genes with high evidence in differential expression between tested groups (-log10 p-value greater than 1)'
-            )
         #
         #
         #

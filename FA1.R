@@ -14,8 +14,8 @@ if (length(args) == 2) {
   de_genes = args[2]
 } else {
   print('Warning! No input parameters. Using defaults')
-  de_genes = '/home/alexey/ngs/NGS_Reporting_TestData/data/bcbio_postproc/Dev_0406/work/postproc/RNAanalysis/g1_g2/de_gene_all.csv'
-  dir_path='/home/alexey/ngs/NGS_Reporting_TestData/data/bcbio_postproc/Dev_0406/work/postproc/RNAanalysis/g1_g2'
+  de_genes = '/home/alexey/ngs/NGS_Reporting_TestData/data/bcbio_postproc/Dev_0406/work/postproc/RNAanalysis/group_g3_vs_g4/de_gene_all.csv'
+  dir_path='/home/alexey/ngs/NGS_Reporting_TestData/data/bcbio_postproc/Dev_0406/work/postproc/RNAanalysis/group_g3_vs_g4/'
 }
 
 data = read.csv(de_genes)
